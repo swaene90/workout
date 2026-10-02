@@ -22,6 +22,7 @@ public class PostgresTests
             var member = await db.Members.FindAsync(Members.YourId);
             Assert.Equal("green", member!.Theme); Assert.Equal("light", member.Mode);
             member.Theme = "beige"; member.Mode = "dark";
+            member.ProfilePictureUrl = "https://lh3.googleusercontent.com/example-photo";
             db.Workouts.Add(new WorkoutSession
             {
                 Id = id,
@@ -37,6 +38,8 @@ public class PostgresTests
         {
             var member = await db.Members.FindAsync(Members.YourId);
             Assert.Equal("beige", member!.Theme); Assert.Equal("dark", member.Mode);
+            Assert.Equal("https://lh3.googleusercontent.com/example-photo", member.ProfilePictureUrl);
+            member.ProfilePictureUrl = null;
             member.Theme = "green"; member.Mode = "light";
             var workout = await db.Workouts.Include(w => w.Exercises).ThenInclude(e => e.Sets).SingleAsync(w => w.Id == id);
             Assert.Equal(2, workout.Exercises.Count); Assert.Equal(135, workout.Exercises.Single(e => e.Kind == "Strength").Sets.Single().WeightLb);

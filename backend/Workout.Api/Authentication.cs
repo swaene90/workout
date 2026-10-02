@@ -15,6 +15,12 @@ public static class WorkoutAuth
     public static bool Eligible(string? email, string? verified, string? subject) =>
         Members.Allowed(email) && string.Equals(verified, "true", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(subject);
 
+    public static string? GooglePicture(string? value) =>
+        value is { Length: <= 2048 } && Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+        uri.Scheme == "https" && uri.Port == 443 && uri.UserInfo.Length == 0 &&
+        uri.Host.EndsWith(".googleusercontent.com", StringComparison.OrdinalIgnoreCase)
+            ? uri.AbsoluteUri : null;
+
     public static void AddWorkoutAuth(this IServiceCollection services, IConfiguration configuration, bool development)
     {
         services.AddAuthentication(options =>
@@ -53,6 +59,8 @@ public static class WorkoutAuth
             options.UsePkce = true;
             options.MapInboundClaims = false;
             options.SaveTokens = false;
+            options.GetClaimsFromUserInfoEndpoint = true;
+            options.ClaimActions.MapUniqueJsonKey("picture", "picture");
             options.Scope.Clear();
             options.Scope.Add("openid");
             options.Scope.Add("email");
@@ -80,6 +88,13 @@ public static class WorkoutAuth
                     context.HandleResponse();
                     context.Response.Redirect("/?authError=1");
                     return Task.CompletedTask;
+                },
+                OnTicketReceived = async context =>
+                {
+                    var db = context.HttpContext.RequestServices.GetRequiredService<WorkoutDb>();
+                    var member = await db.Members.SingleAsync(x => x.Id == UserId(context.Principal!));
+                    member.ProfilePictureUrl = GooglePicture(context.Principal?.FindFirstValue("picture"));
+                    await db.SaveChangesAsync();
                 }
             };
         });

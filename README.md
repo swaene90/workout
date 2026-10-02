@@ -42,7 +42,7 @@ The interface is designed for phones, with bottom navigation and touch-sized con
 
 ## Sign-in
 
-Use Google to sign in to your private workout space. Access is limited to the two invited accounts. Both partners can view shared workout activity, while workouts, templates, goals, and appearance settings remain individually editable.
+Use Google to sign in to your private workout space. Your Google profile picture appears in the header and beside your weekly streak; initials appear when a picture is unavailable. Access is limited to the two invited accounts. Both partners can view shared workout activity, while workouts, templates, goals, and appearance settings remain individually editable.
 
 ## Explore the demo
 

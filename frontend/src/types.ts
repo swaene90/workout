@@ -4,6 +4,7 @@ export type Member = {
   email: string;
   theme?: string;
   mode?: string;
+  profilePictureUrl?: string | null;
 };
 export type StrengthSet = { reps: number; weightLb: number };
 export type Exercise = {

@@ -19,6 +19,7 @@ public class Member
     public string Email { get; set; } = "";
     public string Theme { get; set; } = "green";
     public string Mode { get; set; } = "light";
+    public string? ProfilePictureUrl { get; set; }
     [JsonIgnore] public string? GoogleSubject { get; set; }
 }
 
@@ -88,6 +89,7 @@ public class WorkoutDb(DbContextOptions<WorkoutDb> options) : DbContext(options)
         b.Entity<Member>().Property(x => x.Email).HasMaxLength(320);
         b.Entity<Member>().Property(x => x.Theme).HasMaxLength(12).HasDefaultValue("green");
         b.Entity<Member>().Property(x => x.Mode).HasMaxLength(8).HasDefaultValue("light");
+        b.Entity<Member>().Property(x => x.ProfilePictureUrl).HasMaxLength(2048);
         b.Entity<Member>().HasData(
             new Member { Id = Workout.Api.Members.YourId, Name = "You", Email = "swaene1@gmail.com" },
             new Member { Id = Workout.Api.Members.BrittId, Name = "Britt", Email = "swaene15@gmail.com" });

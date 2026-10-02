@@ -76,6 +76,15 @@ public class FixedClock(DateTimeOffset now) : TimeProvider { public override Dat
 public class AuthenticationTests
 {
     [Theory]
+    [InlineData("https://lh3.googleusercontent.com/photo", true)]
+    [InlineData("http://lh3.googleusercontent.com/photo", false)]
+    [InlineData("https://lh3.googleusercontent.com.evil.example/photo", false)]
+    [InlineData("https://user@lh3.googleusercontent.com/photo", false)]
+    [InlineData(null, false)]
+    public void ProfilePhotosUseOnlySecureGoogleImageUrls(string? value, bool accepted) =>
+        Assert.Equal(accepted, WorkoutAuth.GooglePicture(value) is not null);
+
+    [Theory]
     [InlineData("swaene1@gmail.com", "true", "123", true)]
     [InlineData("swaene15@gmail.com", "true", "456", true)]
     [InlineData("other@gmail.com", "true", "789", false)]

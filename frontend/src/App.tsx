@@ -34,6 +34,7 @@ import type {
 import WorkoutEditor from "./WorkoutEditor";
 import type { EditorState } from "./WorkoutEditor";
 import AppearanceSettings from "./AppearanceSettings";
+import Avatar from "./Avatar";
 import { applyAppearance, isAppearance, readAppearance } from "./appearance";
 
 type Page = "dashboard" | "history" | "templates" | "progress" | "settings";
@@ -281,7 +282,7 @@ export default function App() {
             ))}
           </nav>
           <div className="header-user">
-            <span className="avatar small">{me.user.name[0]}</span>
+            <Avatar user={me.user} className="small" />
             <span>{me.user.name}</span>
           </div>
         </div>
@@ -467,11 +468,10 @@ export default function App() {
                     className={`streak-card ${d.user.id === me.user.id ? "mine" : ""}`}
                   >
                     <div className="card-person">
-                      <span
-                        className={`avatar ${d.user.id === me.user.id ? "you" : "partner"}`}
-                      >
-                        {d.user.name[0]}
-                      </span>
+                      <Avatar
+                        user={d.user}
+                        className={d.user.id === me.user.id ? "you" : "partner"}
+                      />
                       <div>
                         <h3>{d.user.name}</h3>
                         <p>

@@ -200,6 +200,7 @@ h3 {
   font-weight: 600;
 }
 .avatar {
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -211,6 +212,12 @@ h3 {
   font-weight: 650;
   font-size: 16px;
   flex-shrink: 0;
+}
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .avatar.small {
   width: 30px;
