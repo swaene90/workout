@@ -29,7 +29,6 @@ import type {
   ProgressPoint,
   Template,
   Workout,
-  WorkoutInput,
 } from "./types";
 import WorkoutEditor from "./WorkoutEditor";
 import type { EditorState } from "./WorkoutEditor";
@@ -53,15 +52,6 @@ const dateLabel = (
     ...options,
     timeZone: "UTC",
   });
-const initialWorkout = (today: string): WorkoutInput => ({
-  date: today,
-  title: "Daily check-in",
-  type: "Other",
-  completed: true,
-  durationMinutes: null,
-  notes: "",
-  exercises: [],
-});
 
 export default function App() {
   const [appearance, setAppearance] = useState(readAppearance);
@@ -427,25 +417,16 @@ export default function App() {
                 <p>
                   {completedToday
                     ? "Another day toward your goal. Nice work."
-                    : "One tap is all it takes to keep the momentum going."}
+                    : "Log what you did and keep the momentum going."}
                 </p>
               </div>
               <button
                 className="button lime"
-                disabled={busy || completedToday}
-                onClick={() =>
-                  void action(
-                    () => api("/workouts", "POST", initialWorkout(me.today)),
-                    "Today is checked in!",
-                  )
-                }
+                disabled={busy}
+                onClick={() => setEditor({ checkIn: true })}
               >
-                {completedToday ? <Check size={17} /> : <Plus size={17} />}
-                {busy
-                  ? "Checking in…"
-                  : completedToday
-                    ? "Checked in"
-                    : "Check in today"}
+                <Plus size={17} />
+                {completedToday ? "Log another workout" : "Check in today"}
               </button>
             </div>
             <div className="section-heading">

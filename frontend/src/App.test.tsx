@@ -51,11 +51,26 @@ beforeEach(() => {
     return [] as never;
   });
 });
-test("quick check-in records today without requiring detailed exercises", async () => {
+test("check-in opens today's completed workout and saves entered exercise details", async () => {
   render(<App />);
   await userEvent.click(
     await screen.findByRole("button", { name: "Check in today" }),
   );
+  expect(api).not.toHaveBeenCalledWith("/workouts", "POST", expect.anything());
+  expect(screen.getByLabelText("Date")).toHaveValue("2026-10-01");
+  expect(screen.getByRole("checkbox", { name: /Completed/ })).toBeChecked();
+  await userEvent.clear(screen.getByLabelText("Workout name"));
+  await userEvent.type(screen.getByLabelText("Workout name"), "Upper body");
+  await userEvent.selectOptions(
+    screen.getByLabelText("Workout type"),
+    "Strength",
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Add strength" }));
+  await userEvent.type(screen.getByLabelText("Exercise name"), "Bench press");
+  await userEvent.clear(screen.getByLabelText("Exercise 1 set 1 weight"));
+  await userEvent.type(screen.getByLabelText("Exercise 1 set 1 weight"), "135");
+  await userEvent.type(screen.getByLabelText("Notes"), "Felt strong");
+  await userEvent.click(screen.getByRole("button", { name: "Save workout" }));
   await waitFor(() =>
     expect(api).toHaveBeenCalledWith(
       "/workouts",
@@ -63,13 +78,33 @@ test("quick check-in records today without requiring detailed exercises", async 
       expect.objectContaining({
         date: "2026-10-01",
         completed: true,
-        exercises: [],
+        title: "Upper body",
+        type: "Strength",
+        notes: "Felt strong",
+        exercises: [
+          expect.objectContaining({
+            name: "Bench press",
+            sets: [{ reps: 8, weightLb: 135 }],
+          }),
+        ],
       }),
     ),
   );
   expect(await screen.findByRole("status")).toHaveTextContent(
-    "Today is checked in!",
+    "Saved. Keep showing up!",
   );
+});
+
+test("canceling check-in does not record a workout", async () => {
+  render(<App />);
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Check in today" }),
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  expect(
+    await screen.findByRole("button", { name: "Check in today" }),
+  ).toBeInTheDocument();
+  expect(api).not.toHaveBeenCalledWith("/workouts", "POST", expect.anything());
 });
 test("unauthenticated visitors see Google login rather than private data", async () => {
   vi.mocked(api).mockRejectedValue(new ApiError(401, "Unauthorized"));

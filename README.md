@@ -14,7 +14,7 @@ Workout is a mobile-first app for workout partners to build consistency together
 
 ## Quick check-ins and detailed logs
 
-Check in with one tap after a workout. Add a workout type, duration, notes, or exercise details whenever you want.
+Tap **Check in today** to log the workout you just completed. The form starts with today's date and completion selected. Add a workout type, duration, notes, strength sets, or cardio details before saving; a simple check-in can also be saved without exercise details. Canceling leaves your activity unchanged. After checking in, use **Log another workout** to record another session that day.
 
 - Log strength exercises with sets, reps, and weight in pounds, including bodyweight sets.
 - Log cardio with duration and optional distance in miles.

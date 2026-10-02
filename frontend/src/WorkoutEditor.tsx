@@ -4,6 +4,7 @@ import type { Exercise, Template, Workout, WorkoutInput } from "./types";
 import { api } from "./api";
 
 export type EditorState = {
+  checkIn?: boolean;
   workout?: Workout;
   template?: Template;
   templateMode?: boolean;
@@ -28,8 +29,8 @@ export default function WorkoutEditor({
       editor.workout?.title ??
       editor.template?.name ??
       editor.fromTemplate?.name ??
-      "",
-    type: source?.type ?? "Mixed",
+      (editor.checkIn ? "Daily check-in" : ""),
+    type: source?.type ?? (editor.checkIn ? "Other" : "Mixed"),
     completed: editor.workout?.completed ?? !editor.fromTemplate,
     durationMinutes: editor.workout?.durationMinutes ?? null,
     notes: source?.notes ?? "",
