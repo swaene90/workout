@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
     && mkdir -p /keys && chown app:app /keys
 WORKDIR /app
 COPY --from=backend /out .
+RUN chmod -R a+rX /app/wwwroot
 USER app
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
