@@ -1,0 +1,65 @@
+name: workout
+
+x-app-environment: &app-environment
+  ConnectionStrings__Workout: ${ConnectionStrings__Workout:?Set ConnectionStrings__Workout in .env}
+  Authentication__Google__ClientId: ${Authentication__Google__ClientId:-}
+  Authentication__Google__ClientSecret: ${Authentication__Google__ClientSecret:-}
+  AllowedHosts: ${PUBLIC_HOSTNAME:-localhost};localhost;127.0.0.1
+  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_HTTPS_PORT: 443
+  DataProtection__Path: /keys
+  Proxy__TrustedIp: 172.30.0.3
+
+services:
+  migrate:
+    image: workout-app:local
+    build: .
+    command: ["--migrate"]
+    environment: *app-environment
+    networks:
+      workout:
+        ipv4_address: 172.30.0.4
+    restart: "no"
+
+  app:
+    image: workout-app:local
+    build: .
+    environment: *app-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - data-protection:/keys
+    networks:
+      workout:
+        ipv4_address: 172.30.0.2
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/health/ready"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    restart: unless-stopped
+
+  tunnel:
+    image: cloudflare/cloudflared:2026.9.3
+    profiles: ["remote"]
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      workout:
+        ipv4_address: 172.30.0.3
+    restart: unless-stopped
+
+networks:
+  workout:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  data-protection:

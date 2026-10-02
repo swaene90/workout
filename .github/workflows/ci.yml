@@ -1,0 +1,40 @@
+name: Build and test
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: workout_tests
+          POSTGRES_USER: workout_test
+          POSTGRES_PASSWORD: local-test-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U workout_test -d workout_tests"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      WORKOUT_TEST_POSTGRES: Host=localhost;Port=5432;Database=workout_tests;Username=workout_test;Password=local-test-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: dotnet test backend/Workout.Tests -c Release
+      - run: npm ci
+        working-directory: frontend
+      - run: npm test
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: docker build -t workout-ci .

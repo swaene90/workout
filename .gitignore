@@ -1,0 +1,16 @@
+.tools/
+**/bin/
+**/obj/
+**/node_modules/
+frontend/dist/
+.env
+.env.*
+!.env.example
+secrets/
+secrets.txt
+artifacts/
+TestResults/
+*.user
+*.log
+*.tsbuildinfo
+.DS_Store

@@ -1,0 +1,11 @@
+.git
+.tools
+.env*
+secrets*
+artifacts
+**/node_modules
+**/bin
+**/obj
+**/dist
+**/*.tsbuildinfo
+**/TestResults

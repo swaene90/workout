@@ -1,0 +1,6 @@
+services:
+  app:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "127.0.0.1:5080:8080"
