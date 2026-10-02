@@ -28,6 +28,14 @@ export function readAppearance(): Appearance {
 export function applyAppearance(value: Appearance) {
   document.documentElement.dataset.theme = value.theme;
   document.documentElement.dataset.mode = value.mode;
+  const browserColor = document.querySelector<HTMLMetaElement>(
+    'meta[name="theme-color"]',
+  );
+  if (browserColor) {
+    browserColor.content = getComputedStyle(
+      document.documentElement,
+    ).backgroundColor;
+  }
   try {
     localStorage.setItem(appearanceKey, JSON.stringify(value));
   } catch {
