@@ -1,4 +1,4 @@
-export const demoMode = import.meta.env.VITE_DEMO === "true";
+export const demoMode = /^\/demo\/?$/.test(window.location.pathname);
 let csrfToken = "";
 export function setCsrf(token: string) {
   csrfToken = token;

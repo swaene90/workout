@@ -18,6 +18,28 @@
 body {
   margin: 0;
 }
+.login-demo-link {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+  border-radius: 8px;
+  background: var(--page);
+}
+.login-demo-link:hover {
+  color: var(--accent-text);
+}
+.demo-banner a {
+  margin-left: 12px;
+  text-decoration: underline;
+}
 button,
 input,
 select,

@@ -82,7 +82,7 @@ export default function App() {
     [to, setTo] = useState(""),
     [historyPage, setHistoryPage] = useState(1);
   const [progressUser, setProgressUser] = useState(""),
-    [exercise, setExercise] = useState(""),
+    [exercise, setExercise] = useState(demoMode ? "Bench press" : ""),
     [progress, setProgress] = useState<ProgressPoint[]>([]);
   const [goalDays, setGoalDays] = useState(3),
     [deleteTarget, setDeleteTarget] = useState<{
@@ -243,6 +243,9 @@ export default function App() {
             </p>
           )}
         </div>
+        <a className="login-demo-link" href="/demo">
+          Explore the demo <ArrowRight size={14} />
+        </a>
       </main>
     );
 
@@ -250,7 +253,7 @@ export default function App() {
     <div className="app-shell">
       {demoMode && (
         <div className="demo-banner">
-          Sample-data preview · workout changes reset on refresh
+          Demo · mock data · changes reset on refresh <a href="/">Exit demo</a>
         </div>
       )}
       <header className="app-header">

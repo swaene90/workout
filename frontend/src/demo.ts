@@ -11,12 +11,12 @@ import type { Appearance } from "./appearance";
 const me: Member = {
   id: "e1111111-1111-4111-8111-111111111111",
   name: "You",
-  email: "swaene1@gmail.com",
+  email: "you@demo.example",
 };
 const britt: Member = {
   id: "b2222222-2222-4222-8222-222222222222",
   name: "Britt",
-  email: "swaene15@gmail.com",
+  email: "britt@demo.example",
 };
 const today = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/New_York",
@@ -53,7 +53,10 @@ let workouts: Workout[] = [me, britt].flatMap((user, u) =>
       type: d === 2 ? "Cardio" : "Strength",
       completed: true,
       durationMinutes: 45,
-      notes: "",
+      notes:
+        d === 2
+          ? "Comfortable pace, steady breathing."
+          : "A little stronger each week.",
       exercises:
         d === 2
           ? [
@@ -61,8 +64,8 @@ let workouts: Workout[] = [me, britt].flatMap((user, u) =>
                 name: "Running",
                 kind: "Cardio" as const,
                 sets: [],
-                durationMinutes: 30,
-                distanceMiles: 3,
+                durationMinutes: 30 + w,
+                distanceMiles: 3 + (5 - w) * 0.1,
               },
             ]
           : [{ ...exercise, sets: [{ reps: 8, weightLb: 155 - w * 5 }] }],
@@ -89,7 +92,26 @@ workouts.push({
   completed: true,
   durationMinutes: 30,
   notes: "",
-  exercises: [],
+  exercises: [
+    {
+      name: "Running",
+      kind: "Cardio",
+      sets: [],
+      durationMinutes: 30,
+      distanceMiles: 3,
+    },
+  ],
+});
+workouts.push({
+  id: crypto.randomUUID(),
+  userId: me.id,
+  date: today,
+  title: "Next strength session",
+  type: "Strength",
+  completed: false,
+  durationMinutes: null,
+  notes: "A saved draft. Finish logging when you're ready.",
+  exercises: [structuredClone(exercise)],
 });
 let templates: Template[] = [
   {
@@ -107,12 +129,31 @@ let templates: Template[] = [
       },
     ],
   },
+  {
+    id: crypto.randomUUID(),
+    userId: me.id,
+    name: "Easy miles",
+    type: "Cardio",
+    notes: "Keep a conversational pace.",
+    exercises: [
+      {
+        name: "Running",
+        kind: "Cardio",
+        sets: [],
+        durationMinutes: 30,
+        distanceMiles: 3,
+      },
+    ],
+  },
 ];
-let goals: Goal[] = [me, britt].map((u) => ({
-  userId: u.id,
-  effectiveWeek: "1970-01-05",
-  days: 3,
-}));
+let goals: Goal[] = [me, britt].flatMap((u) => [
+  {
+    userId: u.id,
+    effectiveWeek: "1970-01-05",
+    days: 2,
+  },
+  { userId: u.id, effectiveWeek: addDays(week, -49), days: 3 },
+]);
 
 export function calculateDemo(user: Member) {
   const dates = new Set(
@@ -170,6 +211,13 @@ export async function demoRequest<T>(
   const [route, query = ""] = path.split("?"),
     params = new URLSearchParams(query);
   const data = body as WorkoutInput & { name: string; days: number };
+  if (
+    (route === "/workouts" && method === "POST") ||
+    (route.startsWith("/workouts/") && method === "PUT")
+  ) {
+    if (data.completed && data.date > today)
+      throw new Error("Completed workouts cannot be in the future.");
+  }
   let result: unknown;
   if (route === "/me")
     result = {
@@ -209,6 +257,10 @@ export async function demoRequest<T>(
     result = w;
   } else if (route.startsWith("/workouts/")) {
     const id = route.split("/")[2];
+    const existing = workouts.find((w) => w.id === id);
+    if (!existing) throw new Error("Workout not found.");
+    if (method !== "GET" && existing.userId !== me.id)
+      throw new Error("You can edit only your own workouts.");
     if (method === "DELETE") workouts = workouts.filter((w) => w.id !== id);
     else if (method === "PUT") {
       workouts = workouts.map((w) =>
@@ -239,6 +291,8 @@ export async function demoRequest<T>(
     }
   } else if (route === "/goals") {
     if (method === "PUT") {
+      if (!Number.isInteger(data.days) || data.days < 1 || data.days > 7)
+        throw new Error("Choose a goal from 1–7 days.");
       goals = goals.filter(
         (g) => !(g.userId === me.id && g.effectiveWeek === addDays(week, 7)),
       );

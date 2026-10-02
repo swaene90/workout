@@ -78,6 +78,9 @@ test("unauthenticated visitors see Google login rather than private data", async
     await screen.findByRole("link", { name: /Continue with Google/ }),
   ).toHaveAttribute("href", "/auth/login");
   expect(screen.queryByText("Your streaks")).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("link", { name: /Explore the demo/ }),
+  ).toHaveAttribute("href", "/demo");
 });
 test("sign-out clears the private view without reloading protected data", async () => {
   render(<App />);

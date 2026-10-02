@@ -1,13 +1,8 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   plugins: [react()],
-  define: {
-    "import.meta.env.VITE_DEMO": JSON.stringify(
-      mode === "demo" ? "true" : "false",
-    ),
-  },
   server: {
     proxy: {
       "/api": "http://localhost:5080",
@@ -20,4 +15,4 @@ export default defineConfig(({ mode }) => ({
     environment: "jsdom",
     setupFiles: "./src/test-setup.ts",
   },
-}));
+});

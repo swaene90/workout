@@ -16,7 +16,7 @@ A mobile-first workout tracker for two brothers. The overview puts weekly streak
 .\scripts\dev.ps1 demo
 ```
 
-Open `http://127.0.0.1:5173`. This explicitly labeled preview uses sample data in memory, requires no Google credentials, and resets workout changes on refresh. Appearance preferences are remembered in this browser. Production builds do not enable this mode, and it does not bypass backend authentication.
+Open `http://127.0.0.1:5173/demo`, or select **Explore the demo** at the bottom right of the login screen. The `/demo` route is available in development and production. It uses browser-only mock workouts, streaks, templates, drafts, progress, and goal history, with working check-ins and editors. Changes reset on refresh; demo appearance preferences are remembered separately in this browser. **Exit demo** returns to the normal application. Demo requests never call the backend, and real `/api` endpoints still require authentication.
 
 The setup installed .NET 10 SDK, Node 24 with npm, and GitHub CLI under the ignored `.tools` directory. `scripts/dev.ps1` finds these tools automatically. Docker Desktop is installed separately and already runs Linux containers. On another machine, install .NET 10 SDK, Node 24 LTS, Git, and Docker with Compose; run `npm ci` in `frontend`.
 

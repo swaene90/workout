@@ -3,7 +3,9 @@ export type Theme = (typeof themes)[number];
 export type Mode = "light" | "dark";
 export type Appearance = { theme: Theme; mode: Mode };
 export const defaultAppearance: Appearance = { theme: "green", mode: "light" };
-export const appearanceKey = "workout.appearance";
+export const appearanceKey = /^\/demo\/?$/.test(window.location.pathname)
+  ? "workout.demo.appearance"
+  : "workout.appearance";
 
 export function isAppearance(value: unknown): value is Appearance {
   if (!value || typeof value !== "object") return false;
