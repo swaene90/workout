@@ -1,10 +1,10 @@
 # Workout
 
-Workout is a mobile-first app for two workout partners to build consistency together. Weekly streaks take center stage, with a quick check-in and a shared view of each person's progress.
+Workout is a mobile-first app for workout partners to build consistency together. Weekly streaks take center stage, with a quick check-in and a shared view of each person's progress.
 
 ## Weekly streaks
 
-- See both people's current streak, longest streak, workout days this week, and weekly goal.
+- See each person's current streak, longest streak, workout days this week, and weekly goal.
 - Follow a Monday–Sunday activity calendar for each person.
 - Start with a goal of 3 workout days per week, adjustable from 1–7.
 - Count workout days rather than sessions: several workouts on one day count as one day.
@@ -24,7 +24,7 @@ Check in with one tap after a workout. Add a workout type, duration, notes, or e
 
 ## Shared history
 
-View both partners' workout histories and filter by person or date range. Open a session to see its exercises, notes, and completion status. Each person can edit only their own workouts.
+View your workout partners' histories and filter by person or date range. Open a session to see its exercises, notes, and completion status. Each person can edit only their own workouts.
 
 ## Reusable templates
 
@@ -32,7 +32,7 @@ Save personal strength or cardio routines as templates. Reuse a template to pref
 
 ## Exercise progress
 
-Explore an exercise's history for either partner. Charts and session records show strength weights and training volume, or cardio distance and duration.
+Explore an exercise's history for any workout partner. Charts and session records show strength weights and training volume, or cardio distance and duration.
 
 ## Personal settings
 
@@ -42,7 +42,7 @@ The interface is designed for phones, with bottom navigation and touch-sized con
 
 ## Sign-in
 
-Use Google to sign in to your private workout space. Your Google profile picture appears in the header and beside your weekly streak; initials appear when a picture is unavailable. Access is limited to the two invited accounts. Both partners can view shared workout activity, while workouts, templates, goals, and appearance settings remain individually editable.
+Use Google to sign in to your private workout space. Your Google profile picture appears in the header and beside your weekly streak; initials appear when a picture is unavailable. Access is limited to invited accounts. Members can view shared workout activity, while workouts, templates, goals, and appearance settings remain individually editable.
 
 ## Explore the demo
 

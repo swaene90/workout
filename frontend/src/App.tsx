@@ -231,7 +231,7 @@ export default function App() {
           </h1>
           <p>
             Keep showing up. Track your workouts, build your weekly streak, and
-            bring your workout partner along.
+            stay motivated together.
           </p>
           <a className="button primary" href="/auth/login">
             Continue with Google <ArrowRight size={18} />
@@ -477,7 +477,7 @@ export default function App() {
                         <p>
                           {d.user.id === me.user.id
                             ? "Your consistency is paying off"
-                            : "Your accountability partner"}
+                            : "Showing up alongside you"}
                         </p>
                       </div>
                       <span className="streak-symbol">
@@ -1161,11 +1161,7 @@ export default function App() {
           </>
         )}
         <footer className="app-footer">
-          <span>
-            {demoMode
-              ? "A little consistency, together."
-              : "Just you, Britt, and the work."}
-          </span>
+          <span>A little consistency, together.</span>
           <span>
             One week at a time <Activity size={13} />
           </span>

@@ -1,6 +1,6 @@
 # Workout
 
-A mobile-first workout tracker for two brothers. The overview puts weekly streaks first: check in with one tap, see both people's Monday–Sunday activity, and keep a realistic weekly goal. Detailed strength/cardio logs, reusable templates, and exercise progress are included.
+A mobile-first workout tracker for workout partners. The overview puts weekly streaks first: check in with one tap, see each person's Monday–Sunday activity, and keep a realistic weekly goal. Detailed strength/cardio logs, reusable templates, and exercise progress are included.
 
 ## Stack
 
@@ -48,7 +48,7 @@ The frontend at `http://127.0.0.1:5173` proxies API and auth routes to the backe
 - Edits, deletions, and backdated entries recalculate current and longest streaks. Future completed workouts are rejected.
 - Goal changes take effect the following Monday, preserving historical goals.
 - Templates prefill a draft; explicitly mark the workout completed when saving to make it count.
-- Each person can read both workout histories but modify only their own workouts, templates, and goal. Templates are personal.
+- Each person can read shared workout histories but modify only their own workouts, templates, and goal. Templates are personal.
 - Strength uses reps and pounds; cardio uses minutes and optional miles. Zero-pound sets support bodyweight exercises.
 
 ## Appearance
