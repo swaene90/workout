@@ -13,10 +13,10 @@ const me: Member = {
   name: "You",
   email: "you@demo.example",
 };
-const britt: Member = {
+const partner: Member = {
   id: "b2222222-2222-4222-8222-222222222222",
-  name: "Britt",
-  email: "britt@demo.example",
+  name: "Workout buddy",
+  email: "partner@demo.example",
 };
 const today = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/New_York",
@@ -43,7 +43,7 @@ const exercise: Exercise = {
   durationMinutes: null,
   distanceMiles: null,
 };
-let workouts: Workout[] = [me, britt].flatMap((user, u) =>
+let workouts: Workout[] = [me, partner].flatMap((user, u) =>
   Array.from({ length: u ? 4 : 6 }, (_, w) =>
     [0, 2, 4].map((d) => ({
       id: crypto.randomUUID(),
@@ -85,7 +85,7 @@ workouts.push({
 });
 workouts.push({
   id: crypto.randomUUID(),
-  userId: britt.id,
+  userId: partner.id,
   date: week,
   title: "Easy run",
   type: "Cardio",
@@ -146,7 +146,7 @@ let templates: Template[] = [
     ],
   },
 ];
-let goals: Goal[] = [me, britt].flatMap((u) => [
+let goals: Goal[] = [me, partner].flatMap((u) => [
   {
     userId: u.id,
     effectiveWeek: "1970-01-05",
@@ -231,7 +231,7 @@ export async function demoRequest<T>(
     applyAppearance(appearance);
     result = appearance;
   } else if (route === "/dashboard")
-    result = [calculateDemo(me), calculateDemo(britt)];
+    result = [calculateDemo(me), calculateDemo(partner)];
   else if (route === "/workouts" && method === "GET") {
     const items = workouts
       .filter(

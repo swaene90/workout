@@ -230,12 +230,18 @@ export default function App() {
           </h1>
           <p>
             Keep showing up. Track your workouts, build your weekly streak, and
-            bring your brother along.
+            {demoMode
+              ? "bring your workout partner along."
+              : "bring your brother along."}
           </p>
           <a className="button primary" href="/auth/login">
             Continue with Google <ArrowRight size={18} />
           </a>
-          <p className="login-note">A private space for you and Britt.</p>
+          <p className="login-note">
+            {demoMode
+              ? "A sample space to explore together."
+              : "A private space for you and Britt."}
+          </p>
           {(error || new URLSearchParams(location.search).has("authError")) && (
             <p className="error" role="alert">
               {error ||
@@ -466,7 +472,7 @@ export default function App() {
                   >
                     <div className="card-person">
                       <span
-                        className={`avatar ${d.user.id === me.user.id ? "you" : "britt"}`}
+                        className={`avatar ${d.user.id === me.user.id ? "you" : "partner"}`}
                       >
                         {d.user.name[0]}
                       </span>
@@ -1159,7 +1165,11 @@ export default function App() {
           </>
         )}
         <footer className="app-footer">
-          <span>Just you, Britt, and the work.</span>
+          <span>
+            {demoMode
+              ? "A little consistency, together."
+              : "Just you, Britt, and the work."}
+          </span>
           <span>
             One week at a time <Activity size={13} />
           </span>

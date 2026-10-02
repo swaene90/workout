@@ -28,6 +28,7 @@ test("public demo supports all data features without calling the real API", asyn
   const me = await api<Me>("/me");
   const dashboard = await api<Dashboard[]>("/dashboard");
   expect(dashboard).toHaveLength(2);
+  expect(JSON.stringify({ me, dashboard })).not.toMatch(/Austin|Britt/i);
   expect(dashboard[0].summary.currentStreak).toBe(6);
   const history = await api<{ items: Workout[] }>("/workouts");
   expect(history.items.some((w) => !w.completed)).toBe(true);
