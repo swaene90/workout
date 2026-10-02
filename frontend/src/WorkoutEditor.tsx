@@ -44,6 +44,27 @@ export default function WorkoutEditor({
       exercises: f.exercises.map((e, n) => (n === i ? { ...e, ...patch } : e)),
     }));
   const number = (value: string) => (value === "" ? null : Number(value));
+  const justCheckIn = async () => {
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      await api("/workouts", "POST", {
+        date: today,
+        title: "Daily check-in",
+        type: "Other",
+        completed: true,
+        durationMinutes: null,
+        notes: "",
+        exercises: [],
+      });
+      onSaved();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setSaving(true);
@@ -94,6 +115,27 @@ export default function WorkoutEditor({
           </h1>
         </div>
       </div>
+      {editor.checkIn && (
+        <div className="panel quick-checkin-panel">
+          <div>
+            <h2>Keep it simple</h2>
+            <p>Record today with no details, or log your workout below.</p>
+          </div>
+          <button
+            className="button secondary"
+            type="button"
+            disabled={saving}
+            onClick={() => void justCheckIn()}
+          >
+            {saving ? "Saving…" : "Just check in"}
+          </button>
+        </div>
+      )}
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
       <form onSubmit={submit} className="panel form-panel">
         <div className="form-grid">
           <label>
@@ -356,11 +398,6 @@ export default function WorkoutEditor({
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
           />
         </label>
-        {error && (
-          <p className="error" role="alert">
-            {error}
-          </p>
-        )}
         <div className="form-footer">
           <button type="button" className="button secondary" onClick={onCancel}>
             Cancel

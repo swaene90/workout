@@ -95,6 +95,30 @@ test("check-in opens today's completed workout and saves entered exercise detail
   );
 });
 
+test("just check in records today without requiring workout details", async () => {
+  render(<App />);
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Check in today" }),
+  );
+  await userEvent.clear(screen.getByLabelText("Workout name"));
+  await userEvent.click(screen.getByRole("button", { name: "Add strength" }));
+  await userEvent.click(screen.getByRole("button", { name: "Just check in" }));
+  await waitFor(() =>
+    expect(api).toHaveBeenCalledWith("/workouts", "POST", {
+      date: "2026-10-01",
+      title: "Daily check-in",
+      type: "Other",
+      completed: true,
+      durationMinutes: null,
+      notes: "",
+      exercises: [],
+    }),
+  );
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "Saved. Keep showing up!",
+  );
+});
+
 test("canceling check-in does not record a workout", async () => {
   render(<App />);
   await userEvent.click(

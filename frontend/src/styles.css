@@ -219,6 +219,23 @@ h3 {
   height: 100%;
   object-fit: cover;
 }
+.quick-checkin-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.quick-checkin-panel h2 {
+  font-size: 16px;
+}
+.quick-checkin-panel p {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 5px;
+}
 .avatar.small {
   width: 30px;
   height: 30px;
