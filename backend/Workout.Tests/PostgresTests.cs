@@ -19,6 +19,9 @@ public class PostgresTests
         {
             await db.Database.MigrateAsync();
             Assert.False(db.Database.HasPendingModelChanges());
+            var member = await db.Members.FindAsync(Members.YourId);
+            Assert.Equal("green", member!.Theme); Assert.Equal("light", member.Mode);
+            member.Theme = "beige"; member.Mode = "dark";
             db.Workouts.Add(new WorkoutSession
             {
                 Id = id,
@@ -32,6 +35,9 @@ public class PostgresTests
         }
         await using (var db = new WorkoutDb(options))
         {
+            var member = await db.Members.FindAsync(Members.YourId);
+            Assert.Equal("beige", member!.Theme); Assert.Equal("dark", member.Mode);
+            member.Theme = "green"; member.Mode = "light";
             var workout = await db.Workouts.Include(w => w.Exercises).ThenInclude(e => e.Sets).SingleAsync(w => w.Id == id);
             Assert.Equal(2, workout.Exercises.Count); Assert.Equal(135, workout.Exercises.Single(e => e.Kind == "Strength").Sets.Single().WeightLb);
             Assert.Equal(3.1m, workout.Exercises.Single(e => e.Kind == "Cardio").DistanceMiles);

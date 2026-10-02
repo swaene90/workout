@@ -89,6 +89,20 @@ api.MapGet("/me", async (HttpContext http, WorkoutDb db, IAntiforgery csrf, Time
     return Results.Ok(new { user = member, csrfToken = csrf.GetAndStoreTokens(http).RequestToken, today = Streaks.Today(clock), timeZone = "America/New_York" });
 });
 api.MapPost("/logout", async (HttpContext http) => { await http.SignOutAsync("Cookies"); return Results.NoContent(); });
+api.MapPut("/preferences", async (AppearanceInput input, HttpContext http, WorkoutDb db) =>
+{
+    var errors = new Dictionary<string, string[]>();
+    if (!new[] { "green", "red", "blue", "beige", "purple" }.Contains(input.Theme))
+        errors["theme"] = ["Choose green, red, blue, beige, or purple."];
+    if (!new[] { "light", "dark" }.Contains(input.Mode))
+        errors["mode"] = ["Choose light or dark mode."];
+    if (errors.Count > 0) return Results.ValidationProblem(errors);
+    var member = await db.Members.SingleAsync(x => x.Id == WorkoutAuth.UserId(http.User));
+    member.Theme = input.Theme;
+    member.Mode = input.Mode;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { member.Theme, member.Mode });
+});
 api.MapGet("/dashboard", async (WorkoutDb db, TimeProvider clock) =>
 {
     var today = Streaks.Today(clock);

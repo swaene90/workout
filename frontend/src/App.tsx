@@ -33,6 +33,8 @@ import type {
 } from "./types";
 import WorkoutEditor from "./WorkoutEditor";
 import type { EditorState } from "./WorkoutEditor";
+import AppearanceSettings from "./AppearanceSettings";
+import { applyAppearance, isAppearance, readAppearance } from "./appearance";
 
 type Page = "dashboard" | "history" | "templates" | "progress" | "settings";
 const nav = [
@@ -61,6 +63,7 @@ const initialWorkout = (today: string): WorkoutInput => ({
 });
 
 export default function App() {
+  const [appearance, setAppearance] = useState(readAppearance);
   const [me, setMe] = useState<Me | null>(null),
     [loading, setLoading] = useState(true),
     [signedOut, setSignedOut] = useState(false);
@@ -106,6 +109,14 @@ export default function App() {
         if (cancelled) return;
         setCsrf(user.csrfToken);
         setMe(user);
+        const savedAppearance = {
+          theme: user.user.theme,
+          mode: user.user.mode,
+        };
+        if (isAppearance(savedAppearance)) {
+          setAppearance(savedAppearance);
+          applyAppearance(savedAppearance);
+        }
         setProgressUser(user.user.id);
         await reload();
       })
@@ -239,7 +250,7 @@ export default function App() {
     <div className="app-shell">
       {demoMode && (
         <div className="demo-banner">
-          Sample-data preview · changes stay in this tab and reset on refresh
+          Sample-data preview · workout changes reset on refresh
         </div>
       )}
       <header className="app-header">
@@ -1064,6 +1075,7 @@ export default function App() {
               </div>
             </div>
             <div className="settings-grid">
+              <AppearanceSettings value={appearance} onChange={setAppearance} />
               <section className="panel settings-panel">
                 <h2>Weekly workout goal</h2>
                 <p className="muted">

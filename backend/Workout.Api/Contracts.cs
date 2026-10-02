@@ -6,6 +6,7 @@ public record WorkoutInput(DateOnly Date, string Title, string Type, bool Comple
     decimal? DurationMinutes, string Notes, List<ExerciseInput> Exercises);
 public record TemplateInput(string Name, string Type, string Notes, List<ExerciseInput> Exercises);
 public record GoalInput(int Days);
+public record AppearanceInput(string Theme, string Mode);
 
 public static class Inputs
 {

@@ -64,6 +64,34 @@ public class TestAuth(IOptionsMonitor<AuthenticationSchemeOptions> options, ILog
 public class ApiTests
 {
     [Fact]
+    public async Task AppearanceIsPersonalPersistsAndRequiresCsrf()
+    {
+        await using var app = new ApiFactory(); using var you = app.Client(); using var brother = app.Client("swaene15@gmail.com");
+        Assert.Equal(HttpStatusCode.BadRequest, (await you.PutAsJsonAsync("/api/preferences", new AppearanceInput("purple", "dark"))).StatusCode);
+        await Csrf(you); await Csrf(brother);
+        Assert.Equal(HttpStatusCode.OK, (await you.PutAsJsonAsync("/api/preferences", new AppearanceInput("purple", "dark"))).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await brother.PutAsJsonAsync("/api/preferences", new AppearanceInput("blue", "light"))).StatusCode);
+        using var freshYou = app.Client();
+        var youProfile = (await freshYou.GetFromJsonAsync<JsonElement>("/api/me")).GetProperty("user");
+        var brotherProfile = (await brother.GetFromJsonAsync<JsonElement>("/api/me")).GetProperty("user");
+        Assert.Equal("purple", youProfile.GetProperty("theme").GetString());
+        Assert.Equal("dark", youProfile.GetProperty("mode").GetString());
+        Assert.Equal("blue", brotherProfile.GetProperty("theme").GetString());
+        Assert.Equal("light", brotherProfile.GetProperty("mode").GetString());
+    }
+    [Theory]
+    [InlineData("orange", "light")]
+    [InlineData("green", "system")]
+    [InlineData("GREEN", "dark")]
+    public async Task InvalidAppearancesAreRejected(string theme, string mode)
+    {
+        await using var app = new ApiFactory(); using var client = app.Client(); await Csrf(client);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync("/api/preferences", new AppearanceInput(theme, mode))).StatusCode);
+        var profile = (await client.GetFromJsonAsync<JsonElement>("/api/me")).GetProperty("user");
+        Assert.Equal("green", profile.GetProperty("theme").GetString());
+        Assert.Equal("light", profile.GetProperty("mode").GetString());
+    }
+    [Fact]
     public async Task MissingGoogleCredentialsDoNotBreakHealthAndLoginExplainsSetup()
     {
         await using var app = new ApiFactory(); using var client = app.Client(null);

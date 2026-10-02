@@ -6,6 +6,8 @@ import type {
   Workout,
   WorkoutInput,
 } from "./types";
+import { applyAppearance, readAppearance } from "./appearance";
+import type { Appearance } from "./appearance";
 const me: Member = {
   id: "e1111111-1111-4111-8111-111111111111",
   name: "You",
@@ -171,12 +173,16 @@ export async function demoRequest<T>(
   let result: unknown;
   if (route === "/me")
     result = {
-      user: me,
+      user: { ...me, ...readAppearance() },
       csrfToken: "demo",
       today,
       timeZone: "America/New_York",
     };
-  else if (route === "/dashboard")
+  else if (route === "/preferences" && method === "PUT") {
+    const appearance = body as Appearance;
+    applyAppearance(appearance);
+    result = appearance;
+  } else if (route === "/dashboard")
     result = [calculateDemo(me), calculateDemo(britt)];
   else if (route === "/workouts" && method === "GET") {
     const items = workouts

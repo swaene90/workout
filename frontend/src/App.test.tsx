@@ -31,6 +31,7 @@ const summary = {
   weeks: [],
 };
 beforeEach(() => {
+  localStorage.clear();
   vi.resetAllMocks();
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === "/me")

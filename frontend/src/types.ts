@@ -1,4 +1,10 @@
-export type Member = { id: string; name: string; email: string };
+export type Member = {
+  id: string;
+  name: string;
+  email: string;
+  theme?: string;
+  mode?: string;
+};
 export type StrengthSet = { reps: number; weightLb: number };
 export type Exercise = {
   name: string;
