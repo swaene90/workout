@@ -1,0 +1,5 @@
+# Use with compose.yaml; production access remains through HTTPS/Cloudflare.
+services:
+  app:
+    volumes:
+      - ${WORKOUT_APPDATA_PATH:-/mnt/user/appdata/workout}/keys:/keys

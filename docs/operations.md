@@ -90,6 +90,8 @@ EF migrations are checked in. Apply them via the Compose `migrate` service or `d
 
 ## Home-server deployment with Cloudflare Tunnel
 
+For Unraid, use the server-specific [deployment guide](unraid.md) and `compose.unraid.yaml` to persist session keys in the appdata share.
+
 1. Install Docker Engine with Compose on the home server and clone this repository.
 2. Create a private `.env` with the database connection, Google credentials, `PUBLIC_HOSTNAME`, and `TUNNEL_TOKEN`. Transfer the local credentials through a private channel, not Git.
 3. Create a remotely managed tunnel in Cloudflare. Configure a public hostname pointing to **`http://app:8080`**. Use a domain you control in Cloudflare, and put its hostname in `PUBLIC_HOSTNAME` without `https://`.
