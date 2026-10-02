@@ -121,6 +121,7 @@
 }
 .theme-fieldset {
   border: 0;
+  min-width: 0;
   padding: 0;
   margin: 24px 0 0;
 }
@@ -198,7 +199,7 @@
 }
 .mode-options {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   max-width: 320px;
   gap: 10px;
 }

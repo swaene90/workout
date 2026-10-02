@@ -704,6 +704,8 @@ input,
 select,
 textarea {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 46px;
   border: 1px solid var(--border);
   border-radius: 7px;
@@ -859,6 +861,10 @@ td small {
 }
 .form-panel {
   padding: 20px;
+}
+.form-grid > label,
+.exercise-heading > label {
+  min-width: 0;
 }
 .form-grid {
   display: grid;
@@ -1315,6 +1321,15 @@ td small {
 }
 
 /* Installed-app layout and synchronization feedback. */
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--page);
+  z-index: 70;
+  pointer-events: none;
+}
 .app-shell {
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
@@ -1388,6 +1403,7 @@ td small {
 }
 @media (max-width: 639px) {
   .week-calendar {
+    /* Keep each day within its share of the phone screen. */
     grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 4px;
   }
@@ -1413,15 +1429,32 @@ td small {
     gap: 4px;
     grid-template-columns: 16px minmax(0, 1fr) minmax(0, 1fr) 44px;
   }
+  .filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .filters label {
+    min-width: 0;
+  }
+  input[type="date"],
+  input[type="time"] {
+    display: block;
+    -webkit-appearance: none;
+    appearance: none;
+    min-inline-size: 0;
+  }
+  input::-webkit-date-and-time-value {
+    min-width: 0;
+    text-align: left;
+  }
 }
 .install-help li {
   margin-bottom: 10px;
   line-height: 1.5;
 }
-.settings-panel fieldset {
-  border: 1px solid var(--border, #dbe3da);
+.notification-form .reminder-days {
+  border: 1px solid var(--border);
   border-radius: 12px;
-  margin: 12px 0;
 }
 @media (max-width: 700px) {
   .app-header nav {
