@@ -27,10 +27,10 @@ The migration service applies the workout revision, mutation receipt, notificati
 Installation and offline workouts work without push configuration. To enable notifications, generate a VAPID key pair **once** on your server:
 
 ```sh
-docker compose -f compose.yaml -f compose.unraid.yaml run --rm --no-deps app --generate-vapid
+docker run --rm --network none workout-app:local --generate-vapid
 ```
 
-This deliberately prints a public/private key pair. Run it privately; do not paste the output into chat, logs, Git, or screenshots. Copy the values into the server's private `.env`:
+Use the already built application image. The key generator runs without network access and avoids a conflict with the running app's static Compose address. This deliberately prints a public/private key pair. Run it privately; do not paste the output into chat, logs, Git, or screenshots. Copy the values into the server's private `.env`:
 
 ```dotenv
 Notifications__Enabled=true
