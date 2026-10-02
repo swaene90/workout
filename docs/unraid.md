@@ -34,6 +34,20 @@ The migration container should exit with code 0, the app should be healthy, and 
 
 Do not use `compose.local.yaml` on Unraid: it switches to development cookies and binds the app to the server's loopback address. This production stack does not expose port 5080. Users access the HTTPS hostname.
 
+## Reusing an existing Cloudflare tunnel
+
+When an existing `cloudflared` container already serves other applications, attach Workout to its Docker network with `compose.shared-tunnel.yaml`. Do not start Workout's own tunnel service or use the `remote` profile in this mode.
+
+Set `TUNNEL_NETWORK` to that network's name and `TUNNEL_PROXY_IP` to the existing tunnel container's IPv4 address in the private `.env`. The server's current tunnel is on `fantfoot_default` at `172.21.0.3`. The proxy address must remain stable; reserve it in the tunnel's own deployment configuration when recreating that container. If its address changes, update `TUNNEL_PROXY_IP` and recreate Workout. Only that address is trusted for forwarded headers.
+
+Configure the Cloudflare hostname route to HTTP service `http://workout-app:8080`, and run:
+
+```sh
+docker compose -f compose.yaml -f compose.unraid.yaml -f compose.shared-tunnel.yaml up --build -d --wait
+```
+
+Use the same three files for subsequent updates and inspection. The migration job, appdata key preparation, Google callback, and backups described above still apply. No tunnel token is copied into Workout's configuration when reusing the existing tunnel.
+
 ## Reboots and updates
 
 The app and tunnel use Docker's `unless-stopped` restart policy. Keep Docker enabled at Unraid startup. If using Compose Manager, manage this as one Compose stack and retain both Compose files and the `remote` profile. Avoid independently starting the migration container through Unraid's ordinary container autostart controls.

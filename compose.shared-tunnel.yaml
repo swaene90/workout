@@ -1,0 +1,15 @@
+# Use alongside compose.yaml and compose.unraid.yaml, without --profile remote.
+# The existing cloudflared container must be on TUNNEL_NETWORK.
+services:
+  app:
+    environment:
+      Proxy__TrustedIp: ${TUNNEL_PROXY_IP:?Set the existing tunnel container IP}
+    networks:
+      shared-tunnel:
+        aliases:
+          - workout-app
+
+networks:
+  shared-tunnel:
+    external: true
+    name: ${TUNNEL_NETWORK:-fantfoot_default}
