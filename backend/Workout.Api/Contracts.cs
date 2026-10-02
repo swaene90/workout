@@ -54,7 +54,11 @@ public static class Inputs
 
     public static List<ExerciseEntry> Entities(List<ExerciseInput> exercises) => exercises.Select((e, i) => new ExerciseEntry
     {
-        Name = e.Name.Trim(), Kind = e.Kind, Position = i, DurationMinutes = e.DurationMinutes, DistanceMiles = e.DistanceMiles,
+        Name = e.Name.Trim(),
+        Kind = e.Kind,
+        Position = i,
+        DurationMinutes = e.DurationMinutes,
+        DistanceMiles = e.DistanceMiles,
         Sets = e.Sets.Select((s, j) => new StrengthSet { Reps = s.Reps, WeightLb = s.WeightLb, Position = j }).ToList()
     }).ToList();
 }

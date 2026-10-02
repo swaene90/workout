@@ -38,7 +38,7 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IDbContextOptionsConfiguration<WorkoutDb>>();
             services.AddDbContext<WorkoutDb>(o => o.UseInMemoryDatabase(database));
             services.RemoveAll<TimeProvider>(); services.AddSingleton<TimeProvider>(new FixedClock(DateTimeOffset.Parse("2026-10-01T16:00:00Z")));
-            services.AddAuthentication(o => { o.DefaultScheme = "Test"; o.DefaultChallengeScheme = "Test"; o.DefaultForbidScheme = "Test"; }).AddScheme<AuthenticationSchemeOptions, TestAuth>("Test", _ => {});
+            services.AddAuthentication(o => { o.DefaultScheme = "Test"; o.DefaultChallengeScheme = "Test"; o.DefaultForbidScheme = "Test"; }).AddScheme<AuthenticationSchemeOptions, TestAuth>("Test", _ => { });
         });
     }
     public HttpClient Client(string? email = "swaene1@gmail.com")
@@ -63,7 +63,8 @@ public class TestAuth(IOptionsMonitor<AuthenticationSchemeOptions> options, ILog
 
 public class ApiTests
 {
-    [Fact] public async Task MissingGoogleCredentialsDoNotBreakHealthAndLoginExplainsSetup()
+    [Fact]
+    public async Task MissingGoogleCredentialsDoNotBreakHealthAndLoginExplainsSetup()
     {
         await using var app = new ApiFactory(); using var client = app.Client(null);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/health/live")).StatusCode);
@@ -77,19 +78,22 @@ public class ApiTests
         client.DefaultRequestHeaders.Remove("X-CSRF-TOKEN");
         client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", me.GetProperty("csrfToken").GetString());
     }
-    [Fact] public async Task UnauthenticatedAndUnknownAccountsCannotReadWorkouts()
+    [Fact]
+    public async Task UnauthenticatedAndUnknownAccountsCannotReadWorkouts()
     {
         await using var app = new ApiFactory();
         Assert.Equal(HttpStatusCode.Unauthorized, (await app.Client(null).GetAsync("/api/dashboard")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await app.Client("other@gmail.com").GetAsync("/api/workouts")).StatusCode);
     }
-    [Fact] public async Task WritesRequireRealAntiforgeryToken()
+    [Fact]
+    public async Task WritesRequireRealAntiforgeryToken()
     {
         await using var app = new ApiFactory(); using var client = app.Client();
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/workouts", Workout())).StatusCode);
         await Csrf(client); Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/api/workouts", Workout())).StatusCode);
     }
-    [Fact] public async Task BrotherCanReadButCannotEditOrDeleteYourWorkoutOrTemplate()
+    [Fact]
+    public async Task BrotherCanReadButCannotEditOrDeleteYourWorkoutOrTemplate()
     {
         await using var app = new ApiFactory(); using var you = app.Client(); using var brother = app.Client("swaene15@gmail.com");
         await Csrf(you); await Csrf(brother);
@@ -105,7 +109,8 @@ public class ApiTests
         Assert.Equal(HttpStatusCode.Forbidden, (await brother.DeleteAsync($"/api/templates/{tid}")).StatusCode);
         Assert.Empty(await brother.GetFromJsonAsync<JsonElement[]>("/api/templates") ?? []);
     }
-    [Fact] public async Task FutureCompletedWorkoutsFailButTemplatesAndDraftsDoNotCount()
+    [Fact]
+    public async Task FutureCompletedWorkoutsFailButTemplatesAndDraftsDoNotCount()
     {
         await using var app = new ApiFactory(); using var client = app.Client(); await Csrf(client);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/workouts", Workout("2026-10-02"))).StatusCode);
@@ -114,7 +119,8 @@ public class ApiTests
         var dashboard = await client.GetFromJsonAsync<JsonElement[]>("/api/dashboard");
         Assert.All(dashboard!, d => Assert.Equal(0, d.GetProperty("summary").GetProperty("workoutDaysThisWeek").GetInt32()));
     }
-    [Fact] public async Task EditsReplaceExercisesAndGoalChangesStartNextMonday()
+    [Fact]
+    public async Task EditsReplaceExercisesAndGoalChangesStartNextMonday()
     {
         await using var app = new ApiFactory(); using var client = app.Client(); await Csrf(client);
         var created = await (await client.PostAsJsonAsync("/api/workouts", Workout())).Content.ReadFromJsonAsync<JsonElement>();

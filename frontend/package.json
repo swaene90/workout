@@ -8,7 +8,8 @@
     "demo": "vite --mode demo --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "test": "vitest run",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "format": "prettier --write src vite.config.ts index.html tsconfig.json package.json"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -16,14 +17,15 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@testing-library/react": "^16.3.0",
     "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "@types/node": "^24.0.0",
     "@vitejs/plugin-react": "^5.0.4",
     "jsdom": "^27.0.0",
+    "prettier": "^3.6.2",
     "typescript": "~5.9.3",
     "vite": "^7.1.0",
     "vitest": "^4.1.11"

@@ -118,8 +118,17 @@ api.MapPost("/workouts", async (WorkoutInput input, HttpContext http, WorkoutDb 
 {
     var errors = Inputs.Validate(input, Streaks.Today(clock));
     if (errors.Count > 0) return Results.ValidationProblem(errors);
-    var session = new WorkoutSession { UserId = WorkoutAuth.UserId(http.User), Date = input.Date, Title = input.Title.Trim(), Type = input.Type,
-        Completed = input.Completed, DurationMinutes = input.DurationMinutes, Notes = input.Notes, Exercises = Inputs.Entities(input.Exercises) };
+    var session = new WorkoutSession
+    {
+        UserId = WorkoutAuth.UserId(http.User),
+        Date = input.Date,
+        Title = input.Title.Trim(),
+        Type = input.Type,
+        Completed = input.Completed,
+        DurationMinutes = input.DurationMinutes,
+        Notes = input.Notes,
+        Exercises = Inputs.Entities(input.Exercises)
+    };
     db.Workouts.Add(session);
     await db.SaveChangesAsync();
     return Results.Created($"/api/workouts/{session.Id}", session);
@@ -195,9 +204,14 @@ api.MapGet("/progress", async (WorkoutDb db, Guid userId, string exercise) =>
         .Include(x => x.Exercises).ThenInclude(x => x.Sets).OrderBy(x => x.Date).ToListAsync();
     return Results.Ok(sessions.SelectMany(s => s.Exercises.Where(e => e.Name.Trim().Equals(exercise.Trim(), StringComparison.OrdinalIgnoreCase)).Select(e => new
     {
-        s.Id, s.Date, e.Kind, e.DurationMinutes, e.DistanceMiles,
+        s.Id,
+        s.Date,
+        e.Kind,
+        e.DurationMinutes,
+        e.DistanceMiles,
         maxWeightLb = e.Sets.Count > 0 ? e.Sets.Max(x => x.WeightLb) : (decimal?)null,
-        volumeLb = e.Sets.Sum(x => x.WeightLb * x.Reps), sets = e.Sets.OrderBy(x => x.Position)
+        volumeLb = e.Sets.Sum(x => x.WeightLb * x.Reps),
+        sets = e.Sets.OrderBy(x => x.Position)
     })));
 });
 app.MapFallback(async context =>
@@ -209,7 +223,14 @@ app.MapFallback(async context =>
 });
 app.Run();
 
-static object TemplateView(WorkoutTemplate template) => new { template.Id, template.UserId, template.Name, template.Type, template.Notes,
-    exercises = JsonSerializer.Deserialize<List<ExerciseInput>>(template.ExercisesJson, JsonSerializerOptions.Web) };
+static object TemplateView(WorkoutTemplate template) => new
+{
+    template.Id,
+    template.UserId,
+    template.Name,
+    template.Type,
+    template.Notes,
+    exercises = JsonSerializer.Deserialize<List<ExerciseInput>>(template.ExercisesJson, JsonSerializerOptions.Web)
+};
 
 public partial class Program;

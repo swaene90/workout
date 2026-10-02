@@ -10,7 +10,8 @@ public class PostgresFactAttribute : FactAttribute
 }
 public class PostgresTests
 {
-    [PostgresFact] public async Task MigrationsPersistNestedExercisesTemplatesAndCascadeDeletes()
+    [PostgresFact]
+    public async Task MigrationsPersistNestedExercisesTemplatesAndCascadeDeletes()
     {
         var options = new DbContextOptionsBuilder<WorkoutDb>().UseNpgsql(Environment.GetEnvironmentVariable("WORKOUT_TEST_POSTGRES")).Options;
         var id = Guid.NewGuid(); var templateId = Guid.NewGuid();
@@ -18,8 +19,14 @@ public class PostgresTests
         {
             await db.Database.MigrateAsync();
             Assert.False(db.Database.HasPendingModelChanges());
-            db.Workouts.Add(new WorkoutSession { Id = id, UserId = Members.YourId, Date = new(2026, 10, 1), Completed = true,
-                Exercises = Inputs.Entities([new("Bench", "Strength", [new(8, 135)], null, null), new("Running", "Cardio", [], 30, 3.1m)]) });
+            db.Workouts.Add(new WorkoutSession
+            {
+                Id = id,
+                UserId = Members.YourId,
+                Date = new(2026, 10, 1),
+                Completed = true,
+                Exercises = Inputs.Entities([new("Bench", "Strength", [new(8, 135)], null, null), new("Running", "Cardio", [], 30, 3.1m)])
+            });
             db.Templates.Add(new WorkoutTemplate { Id = templateId, UserId = Members.YourId, Name = "Test", ExercisesJson = "[]" });
             await db.SaveChangesAsync();
         }

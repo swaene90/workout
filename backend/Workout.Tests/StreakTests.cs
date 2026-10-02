@@ -10,46 +10,54 @@ public class StreakTests
     private static StreakSummary Calculate(string today, params string[] dates) => Streaks.Calculate(dates.Select(D), Default, D(today));
 
     [Fact] public void NoWorkoutsHasNoStreak() => Assert.Equal(0, Calculate("2026-10-01").CurrentStreak);
-    [Fact] public void RepeatedSessionsCountOneDay()
+    [Fact]
+    public void RepeatedSessionsCountOneDay()
     {
         var result = Calculate("2026-10-01", "2026-09-28", "2026-09-28", "2026-09-28");
         Assert.Equal(1, result.WorkoutDaysThisWeek); Assert.Equal(0, result.CurrentStreak);
     }
-    [Fact] public void IncompleteCurrentWeekPreservesPreviousStreak()
+    [Fact]
+    public void IncompleteCurrentWeekPreservesPreviousStreak()
     {
         var result = Calculate("2026-10-01", "2026-09-21", "2026-09-23", "2026-09-25");
         Assert.Equal(1, result.CurrentStreak); Assert.Equal(1, result.LongestStreak);
     }
-    [Fact] public void MeetingCurrentGoalImmediatelyExtendsStreak()
+    [Fact]
+    public void MeetingCurrentGoalImmediatelyExtendsStreak()
     {
         var result = Calculate("2026-10-01", "2026-09-21", "2026-09-23", "2026-09-25", "2026-09-28", "2026-09-29", "2026-10-01");
         Assert.Equal(2, result.CurrentStreak); Assert.Equal(2, result.LongestStreak);
     }
-    [Fact] public void MissingPastWeekBreaksCurrentButPreservesLongest()
+    [Fact]
+    public void MissingPastWeekBreaksCurrentButPreservesLongest()
     {
         var result = Calculate("2026-10-05", "2026-09-21", "2026-09-23", "2026-09-25");
         Assert.Equal(0, result.CurrentStreak); Assert.Equal(1, result.LongestStreak);
     }
-    [Fact] public void SundayRemainsCurrentUntilMonday()
+    [Fact]
+    public void SundayRemainsCurrentUntilMonday()
     {
         var dates = new[] { "2026-09-21", "2026-09-23", "2026-09-25" };
         Assert.Equal(1, Calculate("2026-10-04", dates).CurrentStreak);
         Assert.Equal(0, Calculate("2026-10-05", dates).CurrentStreak);
     }
-    [Fact] public void BackdatedInsertAndDeletionRecalculateStreak()
+    [Fact]
+    public void BackdatedInsertAndDeletionRecalculateStreak()
     {
         var dates = new[] { "2026-09-21", "2026-09-23", "2026-09-25", "2026-09-28", "2026-09-29" };
         Assert.Equal(0, Calculate("2026-10-05", dates).CurrentStreak);
         Assert.Equal(2, Calculate("2026-10-05", dates.Append("2026-10-01").ToArray()).CurrentStreak);
         Assert.Equal(0, Calculate("2026-10-05", dates).CurrentStreak);
     }
-    [Fact] public void GoalChangeUsesHistoricalGoalsAndShowsPendingGoal()
+    [Fact]
+    public void GoalChangeUsesHistoricalGoalsAndShowsPendingGoal()
     {
         var goals = new[] { Default[0], new WeeklyGoal { EffectiveWeek = D("2026-09-28"), Days = 2 }, new WeeklyGoal { EffectiveWeek = D("2026-10-05"), Days = 5 } };
         var result = Streaks.Calculate(new[] { "2026-09-21", "2026-09-23", "2026-09-25", "2026-09-28", "2026-09-29" }.Select(D), goals, D("2026-10-01"));
         Assert.Equal(2, result.CurrentStreak); Assert.Equal(2, result.WeeklyGoal); Assert.Equal(5, result.NextWeeklyGoal);
     }
-    [Fact] public void FutureDatesCannotInflateStats()
+    [Fact]
+    public void FutureDatesCannotInflateStats()
     {
         var result = Calculate("2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04");
         Assert.Equal(0, result.CurrentStreak); Assert.Equal(0, result.WorkoutDaysThisWeek);
