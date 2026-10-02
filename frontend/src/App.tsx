@@ -32,6 +32,12 @@ import type {
 } from "./types";
 import WorkoutEditor from "./WorkoutEditor";
 import type { EditorState } from "./WorkoutEditor";
+import InstallHelp from "./InstallHelp";
+import NotificationSettings, {
+  SyncStatus,
+  detachPush,
+} from "./NotificationSettings";
+import { pending, clearLocal } from "./offline";
 import AppearanceSettings from "./AppearanceSettings";
 import Avatar from "./Avatar";
 import { applyAppearance, isAppearance, readAppearance } from "./appearance";
@@ -79,19 +85,36 @@ export default function App() {
     [deleteTarget, setDeleteTarget] = useState<{
       kind: "workouts" | "templates";
       id: string;
+      revision?: number;
     } | null>(null);
   const historyPath = `/workouts?${new URLSearchParams({ page: String(historyPage), ...(filterUser ? { userId: filterUser } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}) })}`;
   const reload = useCallback(async () => {
-    const [d, h, t, g] = await Promise.all([
+    const [d, h, t, g, profile] = await Promise.allSettled([
       api<Dashboard[]>("/dashboard"),
       api<History>(historyPath),
       api<Template[]>("/templates"),
       api<Goal[]>("/goals"),
+      api<Me>("/me"),
     ]);
-    setDashboard(d);
-    setHistory(h);
-    setTemplates(t);
-    setGoals(g);
+    if (d.status === "fulfilled") setDashboard(d.value);
+    if (h.status === "fulfilled") setHistory(h.value);
+    if (t.status === "fulfilled") setTemplates(t.value);
+    if (g.status === "fulfilled") setGoals(g.value);
+    if (profile.status === "fulfilled") {
+      setCsrf(profile.value.csrfToken);
+      setMe((previous) =>
+        previous?.today === profile.value.today &&
+        previous?.user.id === profile.value.user.id
+          ? previous
+          : profile.value,
+      );
+    } else if (
+      profile.reason instanceof ApiError &&
+      profile.reason.status === 401
+    )
+      setSignedOut(true);
+    const failed = [d, h, t, g].find((result) => result.status === "rejected");
+    if (failed?.status === "rejected") setError(failed.reason.message);
   }, [historyPath]);
   useEffect(() => {
     let cancelled = false;
@@ -226,6 +249,7 @@ export default function App() {
           <a className="button primary" href="/auth/login">
             Continue with Google <ArrowRight size={18} />
           </a>
+          <InstallHelp />
           <p className="login-note">
             Your space to build consistency together.
           </p>
@@ -278,6 +302,7 @@ export default function App() {
         </div>
       </header>
       <main className="main-content">
+        <SyncStatus onRefresh={reload} editing={!!editor} />
         {error && (
           <div className="error global-error" role="alert">
             {error}
@@ -555,7 +580,15 @@ export default function App() {
                       )}
                     </span>
                     <span className="grow">
-                      <strong>{w.title}</strong>
+                      <strong>
+                        {w.title}
+                        {w.pending && (
+                          <small className="pending-label">
+                            {" "}
+                            · Pending sync
+                          </small>
+                        )}
+                      </strong>
                       <small>
                         {
                           dashboard.find((d) => d.user.id === w.userId)?.user
@@ -691,6 +724,12 @@ export default function App() {
                             onClick={() => setDetail(w)}
                           >
                             {w.title}
+                            {w.pending && (
+                              <small className="pending-label">
+                                {" "}
+                                · Pending sync
+                              </small>
+                            )}
                           </button>
                           <small>
                             {w.type} · {w.exercises.length} exercises
@@ -724,18 +763,19 @@ export default function App() {
                             <div className="button-row">
                               <button
                                 className="icon-button"
-                                aria-label={`Edit ${w.title}`}
+                                aria-label={`Edit ${w.title}{w.pending && <small className="pending-label"> · Pending sync</small>}`}
                                 onClick={() => setEditor({ workout: w })}
                               >
                                 <Pencil size={16} />
                               </button>
                               <button
                                 className="icon-button danger"
-                                aria-label={`Delete ${w.title}`}
+                                aria-label={`Delete ${w.title}{w.pending && <small className="pending-label"> · Pending sync</small>}`}
                                 onClick={() =>
                                   setDeleteTarget({
                                     kind: "workouts",
                                     id: w.id,
+                                    revision: w.revision,
                                   })
                                 }
                               >
@@ -764,7 +804,15 @@ export default function App() {
                         )}
                       </span>
                       <span className="grow">
-                        <strong>{w.title}</strong>
+                        <strong>
+                          {w.title}
+                          {w.pending && (
+                            <small className="pending-label">
+                              {" "}
+                              · Pending sync
+                            </small>
+                          )}
+                        </strong>
                         <small>
                           {
                             dashboard.find((d) => d.user.id === w.userId)?.user
@@ -786,16 +834,20 @@ export default function App() {
                         <div className="button-row">
                           <button
                             className="icon-button"
-                            aria-label={`Edit ${w.title}`}
+                            aria-label={`Edit ${w.title}{w.pending && <small className="pending-label"> · Pending sync</small>}`}
                             onClick={() => setEditor({ workout: w })}
                           >
                             <Pencil size={16} />
                           </button>
                           <button
                             className="icon-button danger"
-                            aria-label={`Delete ${w.title}`}
+                            aria-label={`Delete ${w.title}{w.pending && <small className="pending-label"> · Pending sync</small>}`}
                             onClick={() =>
-                              setDeleteTarget({ kind: "workouts", id: w.id })
+                              setDeleteTarget({
+                                kind: "workouts",
+                                id: w.id,
+                                revision: w.revision,
+                              })
                             }
                           >
                             <Trash2 size={16} />
@@ -1062,6 +1114,7 @@ export default function App() {
             </div>
             <div className="settings-grid">
               <AppearanceSettings value={appearance} onChange={setAppearance} />
+              <NotificationSettings />
               <section className="panel settings-panel">
                 <h2>Weekly workout goal</h2>
                 <p className="muted">
@@ -1125,7 +1178,21 @@ export default function App() {
                   onClick={async () => {
                     setBusy(true);
                     try {
+                      if (!navigator.onLine)
+                        throw new Error(
+                          "Connect to the internet before signing out.",
+                        );
+                      const queued = await pending();
+                      if (
+                        queued.length &&
+                        !window.confirm(
+                          "You have unsynced workouts. Sign out and permanently discard those pending changes? Cancel to sync them first.",
+                        )
+                      )
+                        return;
+                      await detachPush();
                       await api("/logout", "POST");
+                      await clearLocal();
                       setMe(null);
                       setSignedOut(true);
                     } catch (e) {
@@ -1187,6 +1254,9 @@ export default function App() {
                         api(
                           `/${deleteTarget.kind}/${deleteTarget.id}`,
                           "DELETE",
+                          deleteTarget.kind === "workouts"
+                            ? { expectedRevision: deleteTarget.revision }
+                            : undefined,
                         ),
                       "Deleted.",
                     )

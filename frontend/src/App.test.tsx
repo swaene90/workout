@@ -6,6 +6,7 @@ import { api, ApiError } from "./api";
 vi.mock("./api", () => ({
   api: vi.fn(),
   setCsrf: vi.fn(),
+  setAccountIdentity: vi.fn(),
   demoMode: false,
   ApiError: class extends Error {
     constructor(

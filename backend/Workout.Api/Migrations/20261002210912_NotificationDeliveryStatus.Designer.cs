@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Workout.Api;
@@ -11,9 +12,11 @@ using Workout.Api;
 namespace Workout.Api.Migrations
 {
     [DbContext(typeof(WorkoutDb))]
-    partial class WorkoutDbModelSnapshot : ModelSnapshot
+    [Migration("20261002210912_NotificationDeliveryStatus")]
+    partial class NotificationDeliveryStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

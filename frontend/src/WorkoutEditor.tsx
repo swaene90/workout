@@ -85,7 +85,9 @@ export default function WorkoutEditor({
         await api(
           `/workouts${editor.workout ? `/${editor.workout.id}` : ""}`,
           editor.workout ? "PUT" : "POST",
-          form,
+          editor.workout
+            ? { ...form, expectedRevision: editor.workout.revision }
+            : form,
         );
       onSaved();
     } catch (e) {

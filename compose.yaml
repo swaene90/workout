@@ -4,6 +4,10 @@ x-app-environment: &app-environment
   ConnectionStrings__Workout: ${ConnectionStrings__Workout:?Set ConnectionStrings__Workout in .env}
   Authentication__Google__ClientId: ${Authentication__Google__ClientId:-}
   Authentication__Google__ClientSecret: ${Authentication__Google__ClientSecret:-}
+  Notifications__Enabled: ${Notifications__Enabled:-false}
+  Notifications__PublicKey: ${Notifications__PublicKey:-}
+  Notifications__PrivateKey: ${Notifications__PrivateKey:-}
+  Notifications__Subject: ${Notifications__Subject:-}
   AllowedHosts: ${PUBLIC_HOSTNAME:-localhost};localhost;127.0.0.1
   ASPNETCORE_ENVIRONMENT: Production
   ASPNETCORE_HTTPS_PORT: 443

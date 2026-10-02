@@ -12,6 +12,8 @@ builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 
 builder.Services.AddDbContext<WorkoutDb>(options => options.UseNpgsql(
     builder.Configuration.GetConnectionString("Workout") ?? "Host=192.168.0.48;Port=5432;Database=workout;Username=workout_app"));
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IPushSender>(services => new PushSender(PushConfiguration.Client(), services.GetRequiredService<IConfiguration>()));
+builder.Services.AddHostedService<NotificationWorker>();
 builder.Services.AddProblemDetails();
 builder.Services.AddWorkoutAuth(builder.Configuration, builder.Environment.IsDevelopment());
 builder.Services.AddAntiforgery(options =>
@@ -32,6 +34,13 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.ForwardLimit = 1;
 });
 
+if (args.Contains("--generate-vapid"))
+{
+    var keys = PushConfiguration.GenerateKeys();
+    Console.WriteLine($"Notifications__PublicKey={keys.PublicKey}");
+    Console.WriteLine($"Notifications__PrivateKey={keys.PrivateKey}");
+    return;
+}
 var app = builder.Build();
 if (args.Contains("--migrate"))
 {
@@ -52,14 +61,33 @@ app.Use(async (context, next) =>
     context.Response.Headers.XContentTypeOptions = "nosniff";
     context.Response.Headers["Referrer-Policy"] = "same-origin";
     context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.googleusercontent.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
-    if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/auth"))
+    if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/auth") || context.Request.Path.StartsWithSegments("/signin-google"))
         context.Response.Headers.CacheControl = "no-store";
     await next();
 });
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider(new Dictionary<string, string>(new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider().Mappings) { [".webmanifest"] = "application/manifest+json" }),
+    OnPrepareResponse = context =>
+    {
+        if (context.File.Name is "sw.js" or "index.html" or "manifest.webmanifest") context.Context.Response.Headers.CacheControl = "no-cache";
+    }
+});
 app.UseAuthentication();
 app.UseAuthorization();
+app.Use(async (context, next) =>
+{
+    var expected = context.Request.Headers["X-Workout-Account"].FirstOrDefault();
+    if (context.Request.Path.StartsWithSegments("/api") && context.Request.Path != "/api/me" && expected is not null &&
+        context.User.HasClaim(c => c.Type == WorkoutAuth.UserClaim) && expected != WorkoutAuth.UserId(context.User).ToString())
+    {
+        context.Response.StatusCode = 401;
+        await context.Response.WriteAsJsonAsync(new { detail = "Your account changed. Sign in to the same account before continuing." });
+        return;
+    }
+    await next();
+});
 
 app.MapGet("/health/live", () => Results.Ok(new { status = "ok" }));
 app.MapGet("/health/ready", async (WorkoutDb db) =>
@@ -111,6 +139,13 @@ api.MapGet("/dashboard", async (WorkoutDb db, TimeProvider clock) =>
     var sessions = await db.Workouts.AsNoTracking().Where(x => x.Completed).Select(x => new { x.UserId, x.Date }).ToListAsync();
     return Results.Ok(members.Select(m => new { user = m, summary = Streaks.Calculate(sessions.Where(x => x.UserId == m.Id).Select(x => x.Date), goals.Where(x => x.UserId == m.Id), today) }));
 });
+api.MapGet("/offline-snapshot", async (HttpContext http, WorkoutDb db, TimeProvider clock) =>
+{
+    var user = WorkoutAuth.UserId(http.User); var today = Streaks.Today(clock); var week = Streaks.Monday(today);
+    var workouts = await db.Workouts.AsNoTracking().Where(w => w.UserId == user && w.Date >= week && w.Date <= today)
+        .Include(w => w.Exercises.OrderBy(e => e.Position)).ThenInclude(e => e.Sets.OrderBy(s => s.Position)).ToListAsync();
+    return Results.Ok(new { week, workouts });
+});
 api.MapGet("/workouts", async (WorkoutDb db, Guid? userId, DateOnly? from, DateOnly? to, int? page) =>
 {
     var query = db.Workouts.AsNoTracking().AsQueryable();
@@ -128,45 +163,21 @@ api.MapGet("/workouts/{id:guid}", async (Guid id, WorkoutDb db) =>
     var workout = await db.Workouts.AsNoTracking().Include(x => x.Exercises.OrderBy(e => e.Position)).ThenInclude(x => x.Sets.OrderBy(s => s.Position)).SingleOrDefaultAsync(x => x.Id == id);
     return workout is null ? Results.NotFound() : Results.Ok(workout);
 });
-api.MapPost("/workouts", async (WorkoutInput input, HttpContext http, WorkoutDb db, TimeProvider clock) =>
+api.MapNotifications();
+api.MapPost("/workout-mutations", (WorkoutMutation input, HttpContext http, WorkoutDb db, TimeProvider clock) =>
+    WorkoutMutations.Apply(input, WorkoutAuth.UserId(http.User), db, clock));
+api.MapPost("/workouts", (WorkoutInput input, HttpContext http, WorkoutDb db, TimeProvider clock) =>
+    WorkoutMutations.Apply(new WorkoutMutation(Guid.NewGuid(), "create", Guid.NewGuid(), null, input), WorkoutAuth.UserId(http.User), db, clock));
+api.MapPut("/workouts/{id:guid}", (Guid id, WorkoutInput input, HttpContext http, WorkoutDb db, TimeProvider clock) =>
+    long.TryParse(http.Request.Headers["If-Match"].FirstOrDefault()?.Trim('"'), out var revision)
+        ? WorkoutMutations.Apply(new WorkoutMutation(Guid.NewGuid(), "update", id, revision, input), WorkoutAuth.UserId(http.User), db, clock)
+        : Task.FromResult(Results.Problem("Supply the workout revision in If-Match.", statusCode: 428)));
+api.MapDelete("/workouts/{id:guid}", async (Guid id, HttpContext http, WorkoutDb db, TimeProvider clock) =>
 {
-    var errors = Inputs.Validate(input, Streaks.Today(clock));
-    if (errors.Count > 0) return Results.ValidationProblem(errors);
-    var session = new WorkoutSession
-    {
-        UserId = WorkoutAuth.UserId(http.User),
-        Date = input.Date,
-        Title = input.Title.Trim(),
-        Type = input.Type,
-        Completed = input.Completed,
-        DurationMinutes = input.DurationMinutes,
-        Notes = input.Notes,
-        Exercises = Inputs.Entities(input.Exercises)
-    };
-    db.Workouts.Add(session);
-    await db.SaveChangesAsync();
-    return Results.Created($"/api/workouts/{session.Id}", session);
-});
-api.MapPut("/workouts/{id:guid}", async (Guid id, WorkoutInput input, HttpContext http, WorkoutDb db, TimeProvider clock) =>
-{
-    var session = await db.Workouts.Include(x => x.Exercises).ThenInclude(x => x.Sets).SingleOrDefaultAsync(x => x.Id == id);
-    if (session is null) return Results.NotFound();
-    if (session.UserId != WorkoutAuth.UserId(http.User)) return Results.Forbid();
-    var errors = Inputs.Validate(input, Streaks.Today(clock));
-    if (errors.Count > 0) return Results.ValidationProblem(errors);
-    db.RemoveRange(session.Exercises);
-    session.Date = input.Date; session.Title = input.Title.Trim(); session.Type = input.Type; session.Completed = input.Completed;
-    session.DurationMinutes = input.DurationMinutes; session.Notes = input.Notes; session.Exercises = Inputs.Entities(input.Exercises);
-    db.AddRange(session.Exercises);
-    await db.SaveChangesAsync();
-    return Results.Ok(session);
-});
-api.MapDelete("/workouts/{id:guid}", async (Guid id, HttpContext http, WorkoutDb db) =>
-{
-    var session = await db.Workouts.FindAsync(id);
-    if (session is null) return Results.NotFound();
-    if (session.UserId != WorkoutAuth.UserId(http.User)) return Results.Forbid();
-    db.Workouts.Remove(session); await db.SaveChangesAsync(); return Results.NoContent();
+    if (!long.TryParse(http.Request.Headers["If-Match"].FirstOrDefault()?.Trim('"'), out var revision))
+        return Results.Problem("Supply the workout revision in If-Match.", statusCode: 428);
+    var result = await WorkoutMutations.Apply(new WorkoutMutation(Guid.NewGuid(), "delete", id, revision, null), WorkoutAuth.UserId(http.User), db, clock);
+    return result is Microsoft.AspNetCore.Http.HttpResults.ContentHttpResult { StatusCode: 200 } ? Results.NoContent() : result;
 });
 api.MapGet("/goals", async (HttpContext http, WorkoutDb db) => Results.Ok(await db.WeeklyGoals.AsNoTracking()
     .Where(x => x.UserId == WorkoutAuth.UserId(http.User)).OrderBy(x => x.EffectiveWeek).ToListAsync()));

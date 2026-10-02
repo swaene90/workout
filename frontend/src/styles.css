@@ -1303,3 +1303,47 @@ td small {
     overflow-wrap: anywhere;
   }
 }
+
+/* Installed-app layout and synchronization feedback. */
+.app-shell {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.main-content {
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+.sync-status {
+  margin-bottom: 16px;
+}
+.sync-status p {
+  line-height: 1.5;
+}
+.sync-status pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 280px;
+  overflow: auto;
+}
+.pending-label {
+  color: var(--muted, #637166);
+  font-weight: normal;
+}
+.install-help .panel {
+  text-align: left;
+  margin: 12px 0;
+}
+.install-help li {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.settings-panel fieldset {
+  border: 1px solid var(--border, #dbe3da);
+  border-radius: 12px;
+  margin: 12px 0;
+}
+@media (max-width: 700px) {
+  .app-header nav {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}

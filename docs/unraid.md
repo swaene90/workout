@@ -68,3 +68,7 @@ docker compose -f compose.yaml -f compose.unraid.yaml --profile remote logs --ta
 ```
 
 See [operations.md](operations.md) for database provisioning, backup, rollback, and authentication details.
+
+## Progressive Web App and notifications
+
+After deploying the HTTPS website, follow [PWA setup](pwa-setup.md) to configure optional push notifications and verify offline synchronization. Share [Install on iPhone](install-on-iphone.md) with members.

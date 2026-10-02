@@ -138,3 +138,7 @@ Take a backup before every schema update. Keep the backup and the `data-protecti
 ## API
 
 Authenticated JSON endpoints live under `/api`: `/me`, `/dashboard`, `/workouts`, `/templates`, `/progress?userId=…&exercise=…`, `/goals`, and `/logout`. Workout history supports `userId`, `from`, `to`, and `page` (30 sessions/page). Obtain `csrfToken` from `/api/me` and send it as `X-CSRF-TOKEN` on writes. Invalid input returns problem-details validation responses; unauthorized/forbidden calls return 401/403. `/auth/login` starts Google login, and `/signin-google` is handled by the OIDC middleware.
+
+## PWA operations
+
+See [PWA setup](pwa-setup.md) for persistent VAPID keys, the notification kill switch, delivery troubleshooting, and installation verification. Back up the private configuration containing VAPID keys together with PostgreSQL and session keys. Unsynced phone workouts are local and are not included in server backups.

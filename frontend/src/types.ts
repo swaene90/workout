@@ -15,6 +15,8 @@ export type Exercise = {
   distanceMiles: number | null;
 };
 export type Workout = {
+  revision: number;
+  pending?: boolean;
   id: string;
   userId: string;
   date: string;
@@ -25,7 +27,10 @@ export type Workout = {
   notes: string;
   exercises: Exercise[];
 };
-export type WorkoutInput = Omit<Workout, "id" | "userId">;
+export type WorkoutInput = Omit<
+  Workout,
+  "id" | "userId" | "revision" | "pending"
+>;
 export type Template = {
   id: string;
   userId: string;

@@ -128,6 +128,7 @@ public class ApiTests
         var workout = await (await you.PostAsJsonAsync("/api/workouts", Workout())).Content.ReadFromJsonAsync<JsonElement>();
         var id = workout.GetProperty("id").GetString();
         Assert.Equal(HttpStatusCode.OK, (await brother.GetAsync($"/api/workouts/{id}")).StatusCode);
+        brother.DefaultRequestHeaders.TryAddWithoutValidation("If-Match", "1");
         Assert.Equal(HttpStatusCode.Forbidden, (await brother.PutAsJsonAsync($"/api/workouts/{id}", Workout())).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await brother.DeleteAsync($"/api/workouts/{id}")).StatusCode);
         var input = new TemplateInput("Bench", "Strength", "", Workout().Exercises);
@@ -154,6 +155,7 @@ public class ApiTests
         var created = await (await client.PostAsJsonAsync("/api/workouts", Workout())).Content.ReadFromJsonAsync<JsonElement>();
         var id = created.GetProperty("id").GetString();
         var updated = Workout() with { Exercises = [new("Running", "Cardio", [], 30, 3)] };
+        client.DefaultRequestHeaders.TryAddWithoutValidation("If-Match", "1");
         Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync($"/api/workouts/{id}", updated)).StatusCode);
         var read = await client.GetFromJsonAsync<JsonElement>($"/api/workouts/{id}");
         Assert.Single(read.GetProperty("exercises").EnumerateArray());
@@ -161,6 +163,8 @@ public class ApiTests
         var goal = await (await client.PutAsJsonAsync("/api/goals", new GoalInput(5))).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("2026-10-05", goal.GetProperty("effectiveWeek").GetString());
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync("/api/goals", new GoalInput(8))).StatusCode);
+        client.DefaultRequestHeaders.Remove("If-Match");
+        client.DefaultRequestHeaders.TryAddWithoutValidation("If-Match", "2");
         Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/workouts/{id}")).StatusCode);
     }
 }

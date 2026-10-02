@@ -34,6 +34,7 @@ public class WorkoutSession
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid UserId { get; set; }
+    public long Revision { get; set; } = 1;
     public DateOnly Date { get; set; }
     public string Title { get; set; } = "Workout";
     public string Type { get; set; } = "Mixed";
@@ -76,6 +77,11 @@ public class WorkoutTemplate
 
 public class WorkoutDb(DbContextOptions<WorkoutDb> options) : DbContext(options)
 {
+    public DbSet<WorkoutMutationReceipt> MutationReceipts => Set<WorkoutMutationReceipt>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+    public DbSet<DeviceSubscription> Subscriptions => Set<DeviceSubscription>();
+    public DbSet<NotificationJob> NotificationJobs => Set<NotificationJob>();
+    public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
     public DbSet<Member> Members => Set<Member>();
     public DbSet<WeeklyGoal> WeeklyGoals => Set<WeeklyGoal>();
     public DbSet<WorkoutSession> Workouts => Set<WorkoutSession>();
@@ -83,6 +89,19 @@ public class WorkoutDb(DbContextOptions<WorkoutDb> options) : DbContext(options)
 
     protected override void OnModelCreating(ModelBuilder b)
     {
+        b.Entity<WorkoutSession>().Property(x => x.Revision).IsConcurrencyToken().HasDefaultValue(1L);
+        b.Entity<WorkoutMutationReceipt>().HasKey(x => new { x.UserId, x.MutationId });
+        b.Entity<NotificationPreference>().HasKey(x => x.UserId);
+        b.Entity<NotificationPreference>().HasOne<Member>().WithOne().HasForeignKey<NotificationPreference>(x => x.UserId);
+        b.Entity<DeviceSubscription>().HasIndex(x => x.Endpoint).IsUnique();
+        b.Entity<DeviceSubscription>().HasOne<Member>().WithMany().HasForeignKey(x => x.UserId);
+        b.Entity<NotificationJob>().HasIndex(x => x.DedupKey).IsUnique();
+        b.Entity<NotificationJob>().HasIndex(x => new { x.Finished, x.Due });
+        b.Entity<NotificationDelivery>().HasKey(x => new { x.JobId, x.SubscriptionId });
+        b.Entity<NotificationDelivery>().Property(x => x.LeaseToken).IsConcurrencyToken();
+        b.Entity<NotificationDelivery>().HasIndex(x => new { x.Finished, x.Due });
+        b.Entity<NotificationDelivery>().HasOne<NotificationJob>().WithMany().HasForeignKey(x => x.JobId);
+        b.Entity<NotificationDelivery>().HasOne<DeviceSubscription>().WithMany().HasForeignKey(x => x.SubscriptionId);
         b.Entity<Member>().HasIndex(x => x.Email).IsUnique();
         b.Entity<Member>().HasIndex(x => x.GoogleSubject).IsUnique();
         b.Entity<Member>().Property(x => x.Name).HasMaxLength(100);

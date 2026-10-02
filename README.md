@@ -51,3 +51,7 @@ Select **Explore the demo** at the bottom right of the login page to try the app
 The demo includes generic sample identities, weekly streaks, workout histories, strength and cardio logs, drafts, templates, progress charts, goal history, and all appearance options. Try check-ins and edits without affecting real workouts.
 
 Demo workout changes reset on refresh. Demo appearance choices are remembered in your browser. Select **Exit demo** to return to the login page.
+
+## Install on your phone and enable notifications
+
+Workout can be installed as a Progressive Web App without an App Store subscription. Follow [Install on iPhone](docs/install-on-iphone.md) for Home Screen installation, notifications, and offline logging. Operators should follow [PWA setup](docs/pwa-setup.md) for deployment, VAPID keys, verification, and troubleshooting.

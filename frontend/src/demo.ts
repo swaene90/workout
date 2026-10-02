@@ -47,6 +47,7 @@ let workouts: Workout[] = [me, partner].flatMap((user, u) =>
   Array.from({ length: u ? 4 : 6 }, (_, w) =>
     [0, 2, 4].map((d) => ({
       id: crypto.randomUUID(),
+      revision: 1,
       userId: user.id,
       date: addDays(week, -7 * (w + 1) + d),
       title: d === 2 ? "Afternoon run" : "Full body",
@@ -74,6 +75,7 @@ let workouts: Workout[] = [me, partner].flatMap((user, u) =>
 );
 workouts.push({
   id: crypto.randomUUID(),
+  revision: 1,
   userId: me.id,
   date: week,
   title: "Monday momentum",
@@ -85,6 +87,7 @@ workouts.push({
 });
 workouts.push({
   id: crypto.randomUUID(),
+  revision: 1,
   userId: partner.id,
   date: week,
   title: "Easy run",
@@ -104,6 +107,7 @@ workouts.push({
 });
 workouts.push({
   id: crypto.randomUUID(),
+  revision: 1,
   userId: me.id,
   date: today,
   title: "Next strength session",
@@ -251,6 +255,7 @@ export async function demoRequest<T>(
     const w = {
       ...structuredClone(data),
       id: crypto.randomUUID(),
+      revision: 1,
       userId: me.id,
     };
     workouts.push(w);
@@ -272,6 +277,7 @@ export async function demoRequest<T>(
   else if (route === "/templates" && method === "POST") {
     const t = {
       id: crypto.randomUUID(),
+      revision: 1,
       userId: me.id,
       name: data.name,
       type: data.type,
