@@ -230,22 +230,18 @@ export default function App() {
           </h1>
           <p>
             Keep showing up. Track your workouts, build your weekly streak, and
-            {demoMode
-              ? "bring your workout partner along."
-              : "bring your brother along."}
+            bring your workout partner along.
           </p>
           <a className="button primary" href="/auth/login">
             Continue with Google <ArrowRight size={18} />
           </a>
           <p className="login-note">
-            {demoMode
-              ? "A sample space to explore together."
-              : "A private space for you and Britt."}
+            Your space to build consistency together.
           </p>
           {(error || new URLSearchParams(location.search).has("authError")) && (
             <p className="error" role="alert">
               {error ||
-                "Sign-in failed. Use one of the two allowed Google accounts and try again."}
+                "Sign-in failed. Use an invited Google account and try again."}
             </p>
           )}
         </div>
