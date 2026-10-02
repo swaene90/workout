@@ -324,6 +324,7 @@ export default function NotificationSettings() {
         </button>
       )}
       <form
+        className="notification-form"
         onSubmit={(e) => {
           e.preventDefault();
           void action(async () => {
@@ -358,7 +359,7 @@ export default function NotificationSettings() {
             onChange={(e) => setP({ ...p, reminderTime: e.target.value })}
           />
         </label>
-        <fieldset>
+        <fieldset className="reminder-days">
           <legend>Reminder days</legend>
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => (
             <label className="checkbox" key={day}>

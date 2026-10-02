@@ -787,6 +787,7 @@ td small {
 }
 .template-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   margin-top: 18px;
@@ -795,6 +796,8 @@ td small {
 }
 .template-actions .button {
   flex: 1;
+  white-space: normal;
+  min-width: 0;
 }
 .empty-state {
   display: flex;
@@ -907,7 +910,7 @@ td small {
 .set-labels,
 .set-row {
   display: grid;
-  grid-template-columns: 24px 1fr 1fr 36px;
+  grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr) 44px;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
@@ -921,7 +924,7 @@ td small {
   color: var(--muted);
 }
 .set-row .icon-button {
-  width: 36px;
+  width: 44px;
   height: 44px;
 }
 .notes {
@@ -955,7 +958,8 @@ td small {
 .progress-stats {
   padding: 25px;
   display: flex;
-  gap: 50px;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 .progress-stats > div {
   display: flex;
@@ -1046,6 +1050,12 @@ td small {
   border-radius: 14px;
   max-width: 420px;
   padding: 28px;
+  min-width: 0;
+  max-height: calc(
+    100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  );
+  overflow-y: auto;
+  overflow-wrap: anywhere;
 }
 .confirm-dialog p {
   font-size: 13px;
@@ -1332,6 +1342,77 @@ td small {
 .install-help .panel {
   text-align: left;
   margin: 12px 0;
+  padding: 16px;
+  overflow-wrap: anywhere;
+}
+.install-help h2 {
+  font-size: 17px;
+}
+.install-help ol {
+  padding-left: 20px;
+}
+.settings-panel form.notification-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 16px;
+}
+.settings-panel .notification-form label {
+  min-width: 0;
+}
+.notification-form .checkbox {
+  margin: 0;
+}
+.notification-form .reminder-days {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+}
+.notification-form .reminder-days legend {
+  padding: 0 4px;
+}
+.notification-form .button,
+.sync-status .button {
+  max-width: 100%;
+  white-space: normal;
+}
+.sync-status .panel {
+  padding: 16px;
+  overflow-wrap: anywhere;
+}
+.sync-status .panel > .button {
+  margin-bottom: 8px;
+}
+@media (max-width: 639px) {
+  .week-calendar {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .day {
+    min-width: 0;
+  }
+  .template-card h2,
+  .template-card p {
+    overflow-wrap: anywhere;
+  }
+  .form-footer {
+    flex-wrap: wrap;
+  }
+  .form-footer .button {
+    white-space: normal;
+  }
+  .set-row input {
+    min-width: 0;
+    padding-inline: 4px;
+  }
+  .set-labels,
+  .set-row {
+    gap: 4px;
+    grid-template-columns: 16px minmax(0, 1fr) minmax(0, 1fr) 44px;
+  }
 }
 .install-help li {
   margin-bottom: 10px;
