@@ -106,6 +106,18 @@ public class NotificationDeliveryTests
         await worker.Deliver(db, CancellationToken.None); Assert.Equal(1,sender.Calls); Assert.True((await db.NotificationDeliveries.AsNoTracking().SingleAsync()).Finished);
     }
     [Fact]
+    public async Task PartnerDeliveryIsSuppressedAfterConnectionRemoval()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:"); await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<WorkoutDb>().UseSqlite(connection).Options;
+        await using var db = new SqliteWorkoutDb(options); await Seed(db);
+        (await db.NotificationJobs.SingleAsync()).Kind = "partner";
+        db.Workouts.Add(new() { UserId = Members.BrittId, Date = new(2026,10,1), Completed = true });
+        db.BuddyConnections.Remove(await db.BuddyConnections.SingleAsync()); await db.SaveChangesAsync();
+        var sender = new Sender(); using var worker = Worker(sender); await worker.Deliver(db, CancellationToken.None);
+        Assert.Equal(0, sender.Calls); Assert.True((await db.NotificationDeliveries.AsNoTracking().SingleAsync()).Finished);
+    }
+    [Fact]
     public async Task SundayCelebrationDeferredUntilMondayStillUsesItsOriginalWeek()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:"); await connection.OpenAsync();

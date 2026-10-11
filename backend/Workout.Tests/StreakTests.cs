@@ -87,9 +87,9 @@ public class AuthenticationTests
     [Theory]
     [InlineData("swaene1@gmail.com", "true", "123", true)]
     [InlineData("swaene15@gmail.com", "true", "456", true)]
-    [InlineData("other@gmail.com", "true", "789", false)]
+    [InlineData("other@gmail.com", "true", "789", true)]
     [InlineData("swaene1@gmail.com", "false", "123", false)]
     [InlineData("swaene1@gmail.com", null, "123", false)]
     [InlineData("swaene1@gmail.com", "true", "", false)]
-    public void OnlyVerifiedAllowedGoogleIdentitiesAreEligible(string email, string? verified, string sub, bool allowed) => Assert.Equal(allowed, WorkoutAuth.Eligible(email, verified, sub));
+    public void GoogleIdentitiesRequireVerifiedEmailAndSubject(string email, string? verified, string sub, bool eligible) => Assert.Equal(eligible, WorkoutAuth.Eligible(email, verified, sub));
 }

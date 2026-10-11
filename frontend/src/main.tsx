@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import InvitationPage from "./InvitationPage";
 import "./styles.css";
 import "./themes.css";
 import { applyAppearance, readAppearance } from "./appearance";
@@ -10,7 +11,11 @@ window.addEventListener("storage", (event) => {
 });
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    {location.pathname.startsWith("/invite/") ? (
+      <InvitationPage token={location.pathname.slice(8)} />
+    ) : (
+      <App />
+    )}
   </React.StrictMode>,
 );
 

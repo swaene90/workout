@@ -51,13 +51,14 @@ public class ApiFactory : WebApplicationFactory<Program>
 }
 public class TestAuth(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
-    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var email = Request.Headers["X-Test-Email"].FirstOrDefault();
-        if (email is null) return Task.FromResult(AuthenticateResult.NoResult());
+        if (email is null) return AuthenticateResult.NoResult();
         var claims = new List<Claim> { new("email", email), new(ClaimTypes.NameIdentifier, email) };
-        if (Members.Allowed(email)) claims.Add(new(WorkoutAuth.UserClaim, email == "swaene1@gmail.com" ? Members.YourId.ToString() : Members.BrittId.ToString()));
-        return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(new ClaimsIdentity(claims, "Test")), "Test")));
+        var member = await Context.RequestServices.GetRequiredService<WorkoutDb>().Members.SingleOrDefaultAsync(m => m.Email == email);
+        if (member is not null) claims.Add(new(WorkoutAuth.UserClaim, member.Id.ToString()));
+        return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(new ClaimsIdentity(claims, "Test")), "Test"));
     }
 }
 

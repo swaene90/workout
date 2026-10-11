@@ -44,6 +44,16 @@ The interface is designed for phones, with bottom navigation and touch-sized con
 
 Use Google to sign in to your private workout space. Your Google profile picture appears in the header and beside your weekly streak; initials appear when a picture is unavailable. Access is limited to invited accounts. Members can view shared workout activity, while workouts, templates, goals, and appearance settings remain individually editable.
 
+## Accountability buddies
+
+Select **Invite a friend** on Overview, or open **Accountability buddies** in Settings. Enter your friend's Google account email and copy the invitation link to share. Links expire after seven days. You can cancel a pending invitation or replace its link from Settings; replacement invalidates the previous link.
+
+Your friend signs in with the matching verified Google email and accepts before activity is shared. Each accepted connection is mutual and includes historical workouts, notes, drafts, streaks, and exercise progress. Your buddies cannot see each other unless they connect separately. Every member can invite any number of buddies.
+
+Either person can remove a buddy in Settings. Removal ends sharing in both directions but keeps both accounts, personal activity, and other connections. Reconnecting requires a new invitation. Previously loaded activity on an offline device is cleared when it next refreshes its connections; personal offline workout changes are preserved.
+
+Set `PublicOrigin` to the application's public HTTPS origin in `.env` for invitation links shared outside your local environment. The included database migration preserves the original buddy pair. Back up the database and deploy the migration, backend, and frontend together. Do not configure proxy/access logs to record invitation tokens in URLs.
+
 ## Explore the demo
 
 Select **Explore the demo** at the bottom right of the login page to try the app without signing in.

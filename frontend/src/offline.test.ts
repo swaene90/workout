@@ -1,6 +1,13 @@
 import { beforeEach, afterEach, expect, test, vi } from "vitest";
 import { request, ApiError } from "./api";
-import { offlineRequest, pending, sync, clearLocal, resolve } from "./offline";
+import {
+  offlineRequest,
+  pending,
+  sync,
+  clearLocal,
+  resolve,
+  clearSharedCache,
+} from "./offline";
 import type { Me, WorkoutInput, Workout, History } from "./types";
 vi.mock("./api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./api")>()),
@@ -35,6 +42,7 @@ beforeEach(async () => {
   vi.mocked(request).mockImplementation(async (path, _method, body) => {
     if (!online) throw new TypeError("offline");
     if (path === "/me") return structuredClone(me) as never;
+    if (path === "/buddies") return { buddies: [], invitations: [] } as never;
     if (path.startsWith("/workouts?"))
       return {
         items: [...server.values()],
@@ -84,6 +92,27 @@ afterEach(async () => {
   online = true;
   await clearLocal();
   vi.restoreAllMocks();
+});
+test("removal clears shared cached views without deleting queued personal workouts", async () => {
+  const id = crypto.randomUUID();
+  server.set(id, { ...input, id, userId: "buddy", revision: 1 });
+  await offlineRequest(`/workouts/${id}`, "GET");
+  online = false;
+  await offlineRequest("/workouts", "POST", input);
+  await clearSharedCache();
+  expect(await pending()).toHaveLength(1);
+  await expect(offlineRequest(`/workouts/${id}`, "GET")).rejects.toThrow(
+    /Connect to the internet/,
+  );
+});
+test("a server denial never falls back to previously cached buddy activity", async () => {
+  const id = crypto.randomUUID();
+  server.set(id, { ...input, id, userId: "buddy", revision: 1 });
+  await offlineRequest(`/workouts/${id}`, "GET");
+  server.delete(id);
+  await expect(offlineRequest(`/workouts/${id}`, "GET")).rejects.toMatchObject({
+    status: 404,
+  });
 });
 test("offline create, edit, and discard compact without server writes", async () => {
   online = false;

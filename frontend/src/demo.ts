@@ -5,6 +5,8 @@ import type {
   Template,
   Workout,
   WorkoutInput,
+  BuddyList,
+  InvitationLink,
 } from "./types";
 import { applyAppearance, readAppearance } from "./appearance";
 import type { Appearance } from "./appearance";
@@ -18,6 +20,16 @@ const partner: Member = {
   name: "Workout buddy",
   email: "partner@demo.example",
 };
+let demoConnected = true;
+const demoInvitations: BuddyList["invitations"] = [];
+function demoLink(id: string, email: string): InvitationLink {
+  return {
+    id,
+    email,
+    expires: new Date(Date.now() + 7 * 86400000).toISOString(),
+    link: `${location.origin}/demo#sample-invitation-${id}`,
+  };
+}
 const today = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/New_York",
   year: "numeric",
@@ -234,12 +246,42 @@ export async function demoRequest<T>(
     const appearance = body as Appearance;
     applyAppearance(appearance);
     result = appearance;
-  } else if (route === "/dashboard")
-    result = [calculateDemo(me), calculateDemo(partner)];
+  } else if (route === "/buddies" && method === "GET")
+    result = {
+      buddies: demoConnected ? [partner] : [],
+      invitations: demoInvitations,
+    };
+  else if (route === "/buddy-invitations" && method === "POST") {
+    const email = (body as { email: string }).email.trim().toLowerCase();
+    if (email === me.email) throw new Error("You cannot invite yourself.");
+    if (demoInvitations.some((i) => i.email === email))
+      throw new Error("An invitation already exists. Replace its link.");
+    const link = demoLink(crypto.randomUUID(), email);
+    demoInvitations.push({ ...link, status: "pending" });
+    result = link;
+  } else if (route.startsWith("/buddy-invitations/") && method === "POST") {
+    const i = demoInvitations.find((i) => i.id === route.split("/")[2]);
+    if (!i) throw new Error("Invitation unavailable.");
+    const link = demoLink(i.id, i.email);
+    i.expires = link.expires;
+    result = link;
+  } else if (route.startsWith("/buddy-invitations/") && method === "DELETE") {
+    const index = demoInvitations.findIndex(
+      (i) => i.id === route.split("/")[2],
+    );
+    if (index >= 0) demoInvitations.splice(index, 1);
+  } else if (route.startsWith("/buddies/") && method === "DELETE")
+    demoConnected = false;
+  else if (route === "/dashboard")
+    result = [
+      calculateDemo(me),
+      ...(demoConnected ? [calculateDemo(partner)] : []),
+    ];
   else if (route === "/workouts" && method === "GET") {
     const items = workouts
       .filter(
         (w) =>
+          (demoConnected || w.userId === me.id) &&
           (!params.get("userId") || w.userId === params.get("userId")) &&
           (!params.get("from") || w.date >= params.get("from")!) &&
           (!params.get("to") || w.date <= params.get("to")!),

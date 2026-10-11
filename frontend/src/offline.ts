@@ -113,6 +113,15 @@ export async function offlineRequest<T>(
         account = me.user.id;
         setAccountIdentity(account);
         await db.put("meta", account, "account");
+        // Use the newly authenticated account for sharing checks after an account switch.
+        const sharing = await request<{ buddies: { id: string }[] }>(
+          "/buddies",
+        );
+        const ids = [account, ...sharing.buddies.map((b) => b.id)].sort();
+        const oldIds = await db.get("meta", `${account}:visible`);
+        if (JSON.stringify(oldIds) !== JSON.stringify(ids))
+          await clearSharedCache(account);
+        await db.put("meta", ids, `${account}:visible`);
         const { csrfToken: _csrf, ...safe } = me;
         await db.put("meta", { ...safe, csrfToken: "" }, "me");
       });
@@ -451,6 +460,22 @@ export async function resolve(p: Pending, apply: boolean) {
   changed();
   await sync();
 }
+export async function clearSharedCache(identity = account) {
+  const db = await database();
+  const tx = db.transaction("cache", "readwrite");
+  for (const key of await tx.store.getAllKeys()) {
+    if (
+      typeof key === "string" &&
+      key.startsWith(`${identity}:`) &&
+      /^\/(dashboard|workouts|progress)(\?|\/|$)/.test(
+        key.slice(identity.length + 1),
+      )
+    )
+      await tx.store.delete(key);
+  }
+  await tx.done;
+}
+
 export async function clearLocal() {
   if (run) await run;
   await exclusive(resetStores);
