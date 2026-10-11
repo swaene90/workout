@@ -471,7 +471,7 @@ export default function App() {
               </span>
             </div>
             <button
-              className="btn secondary"
+              className="button secondary"
               onClick={() => navigate("settings")}
             >
               Invite a friend

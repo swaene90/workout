@@ -63,7 +63,7 @@ export default function InvitationPage({ token }: { token: string }) {
               </p>
             ) : !preview.authenticated ? (
               <a
-                className="btn primary"
+                className="button primary"
                 href={`/auth/login?invite=${encodeURIComponent(token)}`}
               >
                 Continue with Google
@@ -72,7 +72,7 @@ export default function InvitationPage({ token }: { token: string }) {
               <>
                 <p>Sign in with the Google email your friend invited.</p>
                 <button
-                  className="btn secondary"
+                  className="button secondary"
                   disabled={busy}
                   onClick={() => void signOut()}
                 >
@@ -82,7 +82,7 @@ export default function InvitationPage({ token }: { token: string }) {
             ) : (
               <>
                 <button
-                  className="btn primary"
+                  className="button primary"
                   disabled={busy}
                   onClick={async () => {
                     setBusy(true);
@@ -101,7 +101,7 @@ export default function InvitationPage({ token }: { token: string }) {
                   Accept invitation
                 </button>
                 <button
-                  className="btn secondary"
+                  className="button secondary"
                   disabled={busy}
                   onClick={async () => {
                     await signOut(true);

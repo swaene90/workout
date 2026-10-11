@@ -43,7 +43,7 @@ export default function BuddySettings({
   }
   return (
     <section
-      className="panel settings-panel"
+      className="panel settings-panel buddy-settings"
       aria-label="Accountability buddies"
     >
       <h2>Accountability buddies</h2>
@@ -73,7 +73,7 @@ export default function BuddySettings({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <button className="btn primary" disabled={busy}>
+        <button className="button primary" disabled={busy}>
           Invite a friend
         </button>
       </form>
@@ -91,7 +91,7 @@ export default function BuddySettings({
           />
           <p>Expires {new Date(link.expires).toLocaleDateString()}.</p>
           <button
-            className="btn secondary"
+            className="button secondary"
             onClick={async () => {
               try {
                 await navigator.clipboard.writeText(link.link);
@@ -113,7 +113,7 @@ export default function BuddySettings({
         <div className="buddy-row" key={b.id}>
           <span>{b.name}</span>
           <button
-            className="btn secondary"
+            className="button secondary"
             disabled={busy}
             onClick={() => {
               if (
@@ -130,12 +130,12 @@ export default function BuddySettings({
       ))}
       {!!list.invitations.length && <h3>Invitations</h3>}
       {list.invitations.map((i) => (
-        <div className="buddy-row" key={i.id}>
+        <div className="buddy-row invitation-row" key={i.id}>
           <span>
             {i.email} · {i.status === "pending" ? "Pending" : "Expired"}
           </span>
           <button
-            className="btn secondary"
+            className="button secondary"
             disabled={busy}
             onClick={() =>
               void run(async () => {
@@ -151,7 +151,7 @@ export default function BuddySettings({
             Replace link
           </button>
           <button
-            className="btn secondary"
+            className="button secondary"
             disabled={busy}
             onClick={() => {
               if (window.confirm(`Cancel the invitation to ${i.email}?`))
