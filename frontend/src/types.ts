@@ -59,6 +59,28 @@ export type Me = {
   today: string;
   timeZone: string;
 };
+export type BuddyList = {
+  buddies: Pick<Member, "id" | "name" | "profilePictureUrl">[];
+  invitations: {
+    id: string;
+    email: string;
+    expires: string;
+    status: "pending" | "expired";
+  }[];
+};
+export type InvitationLink = {
+  id: string;
+  email: string;
+  expires: string;
+  link: string;
+};
+export type InvitationPreview = {
+  inviterName: string;
+  status: string;
+  authenticated: boolean;
+  matchesEmail: boolean;
+  csrfToken: string;
+};
 export type History = { items: Workout[]; total: number; page: number };
 export type ProgressPoint = {
   id: string;

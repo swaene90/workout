@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Workout.Api;
 using Xunit;
 
@@ -10,6 +11,16 @@ public class PostgresFactAttribute : FactAttribute
 }
 public class PostgresTests
 {
+    [Fact]
+    public void BuddyMigrationSnapshotMatchesCurrentPostgresModel()
+    {
+        using var db = new WorkoutDb(new DbContextOptionsBuilder<WorkoutDb>().UseNpgsql("Host=localhost;Database=unused").Options);
+        Assert.False(db.Database.HasPendingModelChanges());
+        var script = db.GetService<Microsoft.EntityFrameworkCore.Migrations.IMigrator>().GenerateScript();
+        Assert.Contains("CK_BuddyConnection_Order", script);
+        Assert.Contains("IX_BuddyInvitations_InviterId_Email", script);
+        Assert.Contains("WHERE \"Status\" = 'pending'", script);
+    }
     [PostgresFact]
     public async Task MigrationsPersistNestedExercisesTemplatesAndCascadeDeletes()
     {

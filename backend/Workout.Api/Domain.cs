@@ -7,9 +7,6 @@ public static class Members
 {
     public static readonly Guid YourId = Guid.Parse("e1111111-1111-4111-8111-111111111111");
     public static readonly Guid BrittId = Guid.Parse("b2222222-2222-4222-8222-222222222222");
-    public static bool Allowed(string? email) => email is not null &&
-        (email.Equals("swaene1@gmail.com", StringComparison.OrdinalIgnoreCase) ||
-         email.Equals("swaene15@gmail.com", StringComparison.OrdinalIgnoreCase));
 }
 
 public class Member
@@ -83,12 +80,15 @@ public class WorkoutDb(DbContextOptions<WorkoutDb> options) : DbContext(options)
     public DbSet<NotificationJob> NotificationJobs => Set<NotificationJob>();
     public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
     public DbSet<Member> Members => Set<Member>();
+    public DbSet<BuddyConnection> BuddyConnections => Set<BuddyConnection>();
+    public DbSet<BuddyInvitation> BuddyInvitations => Set<BuddyInvitation>();
     public DbSet<WeeklyGoal> WeeklyGoals => Set<WeeklyGoal>();
     public DbSet<WorkoutSession> Workouts => Set<WorkoutSession>();
     public DbSet<WorkoutTemplate> Templates => Set<WorkoutTemplate>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
+        BuddyModel.Configure(b);
         b.Entity<WorkoutSession>().Property(x => x.Revision).IsConcurrencyToken().HasDefaultValue(1L);
         b.Entity<WorkoutMutationReceipt>().HasKey(x => new { x.UserId, x.MutationId });
         b.Entity<NotificationPreference>().HasKey(x => x.UserId);

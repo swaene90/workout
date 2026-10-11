@@ -154,7 +154,7 @@ public class NotificationWorker(IServiceScopeFactory scopes, IConfiguration conf
             var today = Streaks.Today(clock);
             var skip = p is null || !NotificationRules.Enabled(p, job.Kind) || job.Expires <= now || sub.UserId != job.UserId;
             var member = await db.Members.FindAsync([job.UserId], ct);
-            skip |= member is null || !Members.Allowed(member.Email);
+            skip |= member is null;
             var dates = await db.Workouts.Where(x => x.UserId == job.UserId && x.Completed).Select(x => x.Date).ToListAsync(ct);
             var goals = await db.WeeklyGoals.Where(x => x.UserId == job.UserId).ToListAsync(ct);
             var summary = Streaks.Calculate(dates, goals, today);
@@ -164,7 +164,7 @@ public class NotificationWorker(IServiceScopeFactory scopes, IConfiguration conf
                 var celebrated = Streaks.Calculate(dates, goals, job.Week.AddDays(6));
                 skip |= celebrated.WorkoutDaysThisWeek < celebrated.WeeklyGoal;
             }
-            if (job.Kind == "partner") skip |= !await db.Workouts.AnyAsync(x => x.UserId != job.UserId && x.Completed && x.Date == job.Date, ct);
+            if (job.Kind == "partner") skip |= !await db.Workouts.AnyAsync(x => x.UserId != job.UserId && Buddies.Visible(db, job.UserId).Contains(x.UserId) && x.Completed && x.Date == job.Date, ct);
             if (!skip && NotificationRules.Quiet(p!, TimeOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, Streaks.Zone).DateTime)))
             {
                 if (job.Kind is "partner" or "celebration") { d.Due = NotificationRules.AfterQuiet(p!, now); d.LeaseUntil = null; await db.SaveChangesAsync(ct); continue; }

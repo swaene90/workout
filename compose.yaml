@@ -9,6 +9,7 @@ x-app-environment: &app-environment
   Notifications__PrivateKey: ${Notifications__PrivateKey:-}
   Notifications__Subject: ${Notifications__Subject:-}
   AllowedHosts: ${PUBLIC_HOSTNAME:-localhost};localhost;127.0.0.1
+  PublicOrigin: ${PublicOrigin:-}
   ASPNETCORE_ENVIRONMENT: Production
   ASPNETCORE_HTTPS_PORT: 443
   DataProtection__Path: /keys

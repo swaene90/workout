@@ -37,9 +37,10 @@ import NotificationSettings, {
   SyncStatus,
   detachPush,
 } from "./NotificationSettings";
-import { pending, clearLocal } from "./offline";
+import { pending, clearLocal, clearSharedCache } from "./offline";
 import AppearanceSettings from "./AppearanceSettings";
 import Avatar from "./Avatar";
+import BuddySettings from "./BuddySettings";
 import { applyAppearance, isAppearance, readAppearance } from "./appearance";
 
 type Page = "dashboard" | "history" | "templates" | "progress" | "settings";
@@ -88,34 +89,39 @@ export default function App() {
       revision?: number;
     } | null>(null);
   const historyPath = `/workouts?${new URLSearchParams({ page: String(historyPage), ...(filterUser ? { userId: filterUser } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}) })}`;
-  const reload = useCallback(async () => {
-    const [d, h, t, g, profile] = await Promise.allSettled([
-      api<Dashboard[]>("/dashboard"),
-      api<History>(historyPath),
-      api<Template[]>("/templates"),
-      api<Goal[]>("/goals"),
-      api<Me>("/me"),
-    ]);
-    if (d.status === "fulfilled") setDashboard(d.value);
-    if (h.status === "fulfilled") setHistory(h.value);
-    if (t.status === "fulfilled") setTemplates(t.value);
-    if (g.status === "fulfilled") setGoals(g.value);
-    if (profile.status === "fulfilled") {
-      setCsrf(profile.value.csrfToken);
-      setMe((previous) =>
-        previous?.today === profile.value.today &&
-        previous?.user.id === profile.value.user.id
-          ? previous
-          : profile.value,
+  const reload = useCallback(
+    async (resetFilters = false) => {
+      const [d, h, t, g, profile] = await Promise.allSettled([
+        api<Dashboard[]>("/dashboard"),
+        api<History>(resetFilters ? "/workouts?page=1" : historyPath),
+        api<Template[]>("/templates"),
+        api<Goal[]>("/goals"),
+        api<Me>("/me"),
+      ]);
+      if (d.status === "fulfilled") setDashboard(d.value);
+      if (h.status === "fulfilled") setHistory(h.value);
+      if (t.status === "fulfilled") setTemplates(t.value);
+      if (g.status === "fulfilled") setGoals(g.value);
+      if (profile.status === "fulfilled") {
+        setCsrf(profile.value.csrfToken);
+        setMe((previous) =>
+          previous?.today === profile.value.today &&
+          previous?.user.id === profile.value.user.id
+            ? previous
+            : profile.value,
+        );
+      } else if (
+        profile.reason instanceof ApiError &&
+        profile.reason.status === 401
+      )
+        setSignedOut(true);
+      const failed = [d, h, t, g].find(
+        (result) => result.status === "rejected",
       );
-    } else if (
-      profile.reason instanceof ApiError &&
-      profile.reason.status === 401
-    )
-      setSignedOut(true);
-    const failed = [d, h, t, g].find((result) => result.status === "rejected");
-    if (failed?.status === "rejected") setError(failed.reason.message);
-  }, [historyPath]);
+      if (failed?.status === "rejected") setError(failed.reason.message);
+    },
+    [historyPath],
+  );
   useEffect(() => {
     let cancelled = false;
     api<Me>("/me")
@@ -178,6 +184,41 @@ export default function App() {
     };
   }, [page, progressUser, exercise]);
   const own = dashboard.find((d) => d.user.id === me?.user.id);
+  const buddiesChanged = async () => {
+    await clearSharedCache();
+    setDetail(null);
+    setFilterUser("");
+    setFrom("");
+    setTo("");
+    setHistoryPage(1);
+    setProgressUser(me?.user.id ?? "");
+    setProgress([]);
+    setHistory({ items: [], total: 0, page: 1 });
+    setDashboard([]);
+    await reload(true);
+  };
+  useEffect(() => {
+    if (!me) return;
+    const refresh = () => {
+      if (navigator.onLine && !document.hidden) void reload();
+    };
+    window.addEventListener("online", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("online", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [me, reload]);
+  useEffect(() => {
+    const ids = new Set(dashboard.map((d) => d.user.id));
+    if (!ids.size) return;
+    if (filterUser && !ids.has(filterUser)) setFilterUser("");
+    if (progressUser && !ids.has(progressUser)) {
+      setProgressUser(me?.user.id ?? "");
+      setProgress([]);
+    }
+    if (detail && !ids.has(detail.userId)) setDetail(null);
+  }, [dashboard, filterUser, progressUser, detail, me]);
   useEffect(() => {
     if (own) setGoalDays(own.summary.nextWeeklyGoal ?? own.summary.weeklyGoal);
   }, [own?.summary.nextWeeklyGoal, own?.summary.weeklyGoal]);
@@ -429,6 +470,12 @@ export default function App() {
                 })}
               </span>
             </div>
+            <button
+              className="button secondary"
+              onClick={() => navigate("settings")}
+            >
+              Invite a friend
+            </button>
             <div className="checkin-banner">
               <div className="checkin-icon">
                 {completedToday ? <Check /> : <Dumbbell />}
@@ -1113,6 +1160,7 @@ export default function App() {
               </div>
             </div>
             <div className="settings-grid">
+              <BuddySettings onChange={buddiesChanged} />
               <AppearanceSettings value={appearance} onChange={setAppearance} />
               <NotificationSettings />
               <section className="panel settings-panel">

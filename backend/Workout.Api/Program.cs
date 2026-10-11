@@ -63,6 +63,11 @@ app.Use(async (context, next) =>
     context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.googleusercontent.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
     if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/auth") || context.Request.Path.StartsWithSegments("/signin-google"))
         context.Response.Headers.CacheControl = "no-store";
+    if (context.Request.Path.StartsWithSegments("/invite"))
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    }
     await next();
 });
 app.UseDefaultFiles();
@@ -95,10 +100,11 @@ app.MapGet("/health/ready", async (WorkoutDb db) =>
     try { return await db.Database.CanConnectAsync() ? Results.Ok(new { status = "ready" }) : Results.StatusCode(503); }
     catch { return Results.StatusCode(503); }
 });
-app.MapGet("/auth/login", (IConfiguration config) =>
+app.MapGet("/auth/login", (IConfiguration config, string? invite) =>
     string.IsNullOrWhiteSpace(config["Authentication:Google:ClientId"]) || string.IsNullOrWhiteSpace(config["Authentication:Google:ClientSecret"])
         ? Results.Problem("Google login has not been configured.", statusCode: 503)
-        : Results.Challenge(new AuthenticationProperties { RedirectUri = "/" }, ["Google"]));
+        : Results.Challenge(new AuthenticationProperties { RedirectUri = invite is { Length: <= 128 } ? $"/invite/{Uri.EscapeDataString(invite)}" : "/",
+            Items = { ["invite"] = invite is { Length: <= 128 } ? invite : null } }, ["Google"]));
 
 var api = app.MapGroup("/api").RequireAuthorization("Member");
 api.AddEndpointFilter(async (context, next) =>
@@ -116,7 +122,7 @@ api.MapGet("/me", async (HttpContext http, WorkoutDb db, IAntiforgery csrf, Time
     var member = await db.Members.AsNoTracking().SingleAsync(x => x.Id == WorkoutAuth.UserId(http.User));
     return Results.Ok(new { user = member, csrfToken = csrf.GetAndStoreTokens(http).RequestToken, today = Streaks.Today(clock), timeZone = "America/New_York" });
 });
-api.MapPost("/logout", async (HttpContext http) => { await http.SignOutAsync("Cookies"); return Results.NoContent(); });
+api.MapPost("/logout", async (HttpContext http) => { await http.SignOutAsync("Cookies"); await http.SignOutAsync("Invitation"); return Results.NoContent(); });
 api.MapPut("/preferences", async (AppearanceInput input, HttpContext http, WorkoutDb db) =>
 {
     var errors = new Dictionary<string, string[]>();
@@ -131,12 +137,13 @@ api.MapPut("/preferences", async (AppearanceInput input, HttpContext http, Worko
     await db.SaveChangesAsync();
     return Results.Ok(new { member.Theme, member.Mode });
 });
-api.MapGet("/dashboard", async (WorkoutDb db, TimeProvider clock) =>
+api.MapGet("/dashboard", async (HttpContext http, WorkoutDb db, TimeProvider clock) =>
 {
     var today = Streaks.Today(clock);
-    var members = await db.Members.AsNoTracking().OrderBy(x => x.Name).ToListAsync();
-    var goals = await db.WeeklyGoals.AsNoTracking().ToListAsync();
-    var sessions = await db.Workouts.AsNoTracking().Where(x => x.Completed).Select(x => new { x.UserId, x.Date }).ToListAsync();
+    var visible = Buddies.Visible(db, WorkoutAuth.UserId(http.User));
+    var members = await db.Members.AsNoTracking().Where(x => visible.Contains(x.Id)).OrderBy(x => x.Name).ToListAsync();
+    var goals = await db.WeeklyGoals.AsNoTracking().Where(x => visible.Contains(x.UserId)).ToListAsync();
+    var sessions = await db.Workouts.AsNoTracking().Where(x => x.Completed && visible.Contains(x.UserId)).Select(x => new { x.UserId, x.Date }).ToListAsync();
     return Results.Ok(members.Select(m => new { user = m, summary = Streaks.Calculate(sessions.Where(x => x.UserId == m.Id).Select(x => x.Date), goals.Where(x => x.UserId == m.Id), today) }));
 });
 api.MapGet("/offline-snapshot", async (HttpContext http, WorkoutDb db, TimeProvider clock) =>
@@ -146,9 +153,11 @@ api.MapGet("/offline-snapshot", async (HttpContext http, WorkoutDb db, TimeProvi
         .Include(w => w.Exercises.OrderBy(e => e.Position)).ThenInclude(e => e.Sets.OrderBy(s => s.Position)).ToListAsync();
     return Results.Ok(new { week, workouts });
 });
-api.MapGet("/workouts", async (WorkoutDb db, Guid? userId, DateOnly? from, DateOnly? to, int? page) =>
+api.MapGet("/workouts", async (HttpContext http, WorkoutDb db, Guid? userId, DateOnly? from, DateOnly? to, int? page) =>
 {
-    var query = db.Workouts.AsNoTracking().AsQueryable();
+    var visible = Buddies.Visible(db, WorkoutAuth.UserId(http.User));
+    if (userId.HasValue && !await visible.ContainsAsync(userId.Value)) return Results.NotFound();
+    var query = db.Workouts.AsNoTracking().Where(x => visible.Contains(x.UserId));
     if (userId.HasValue) query = query.Where(x => x.UserId == userId);
     if (from.HasValue) query = query.Where(x => x.Date >= from);
     if (to.HasValue) query = query.Where(x => x.Date <= to);
@@ -158,12 +167,14 @@ api.MapGet("/workouts", async (WorkoutDb db, Guid? userId, DateOnly? from, DateO
         .Include(x => x.Exercises.OrderBy(e => e.Position)).ThenInclude(x => x.Sets.OrderBy(s => s.Position)).ToListAsync();
     return Results.Ok(new { items, total, page = currentPage });
 });
-api.MapGet("/workouts/{id:guid}", async (Guid id, WorkoutDb db) =>
+api.MapGet("/workouts/{id:guid}", async (Guid id, HttpContext http, WorkoutDb db) =>
 {
-    var workout = await db.Workouts.AsNoTracking().Include(x => x.Exercises.OrderBy(e => e.Position)).ThenInclude(x => x.Sets.OrderBy(s => s.Position)).SingleOrDefaultAsync(x => x.Id == id);
+    var visible = Buddies.Visible(db, WorkoutAuth.UserId(http.User));
+    var workout = await db.Workouts.AsNoTracking().Include(x => x.Exercises.OrderBy(e => e.Position)).ThenInclude(x => x.Sets.OrderBy(s => s.Position)).SingleOrDefaultAsync(x => x.Id == id && visible.Contains(x.UserId));
     return workout is null ? Results.NotFound() : Results.Ok(workout);
 });
 api.MapNotifications();
+api.MapBuddies(app);
 api.MapPost("/workout-mutations", (WorkoutMutation input, HttpContext http, WorkoutDb db, TimeProvider clock) =>
     WorkoutMutations.Apply(input, WorkoutAuth.UserId(http.User), db, clock));
 api.MapPost("/workouts", (WorkoutInput input, HttpContext http, WorkoutDb db, TimeProvider clock) =>
@@ -221,8 +232,9 @@ api.MapDelete("/templates/{id:guid}", async (Guid id, HttpContext http, WorkoutD
     if (template.UserId != WorkoutAuth.UserId(http.User)) return Results.Forbid();
     db.Templates.Remove(template); await db.SaveChangesAsync(); return Results.NoContent();
 });
-api.MapGet("/progress", async (WorkoutDb db, Guid userId, string exercise) =>
+api.MapGet("/progress", async (HttpContext http, WorkoutDb db, Guid userId, string exercise) =>
 {
+    if (!await Buddies.Visible(db, WorkoutAuth.UserId(http.User)).ContainsAsync(userId)) return Results.NotFound();
     if (string.IsNullOrWhiteSpace(exercise)) return Results.BadRequest();
     var normalized = exercise.Trim().ToLower();
     var sessions = await db.Workouts.AsNoTracking().Where(x => x.Completed && x.UserId == userId && x.Exercises.Any(e => e.Name.ToLower() == normalized))

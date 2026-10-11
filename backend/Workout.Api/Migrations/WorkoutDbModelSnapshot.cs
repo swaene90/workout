@@ -22,6 +22,84 @@ namespace Workout.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Workout.Api.BuddyConnection", b =>
+                {
+                    b.Property<Guid>("FirstId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SecondId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("FirstId", "SecondId");
+
+                    b.HasIndex("SecondId");
+
+                    b.ToTable("BuddyConnections", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_BuddyConnection_Order", "\"FirstId\" < \"SecondId\"");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            FirstId = new Guid("b2222222-2222-4222-8222-222222222222"),
+                            SecondId = new Guid("e1111111-1111-4111-8111-111111111111"),
+                            Created = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
+                        });
+                });
+
+            modelBuilder.Entity("Workout.Api.BuddyInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AcceptedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<DateTimeOffset>("Expires")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("InviterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<string>("TokenHash")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcceptedBy");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("InviterId", "Email")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 'pending'");
+
+                    b.ToTable("BuddyInvitations");
+                });
+
             modelBuilder.Entity("Workout.Api.DeviceSubscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -421,6 +499,35 @@ namespace Workout.Api.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Templates");
+                });
+
+            modelBuilder.Entity("Workout.Api.BuddyConnection", b =>
+                {
+                    b.HasOne("Workout.Api.Member", null)
+                        .WithMany()
+                        .HasForeignKey("FirstId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Workout.Api.Member", null)
+                        .WithMany()
+                        .HasForeignKey("SecondId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Workout.Api.BuddyInvitation", b =>
+                {
+                    b.HasOne("Workout.Api.Member", null)
+                        .WithMany()
+                        .HasForeignKey("AcceptedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Workout.Api.Member", null)
+                        .WithMany()
+                        .HasForeignKey("InviterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Workout.Api.DeviceSubscription", b =>

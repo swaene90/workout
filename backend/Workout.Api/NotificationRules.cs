@@ -42,7 +42,7 @@ public static class NotificationRules
     {
         var today = Streaks.Today(clock); var week = Streaks.Monday(today); var now = clock.GetUtcNow();
         if (date == today && !before.Contains(date))
-            foreach (var p in await db.NotificationPreferences.Where(x => x.UserId != actor).ToListAsync())
+            foreach (var p in await db.NotificationPreferences.Where(x => x.UserId != actor && Buddies.Visible(db, actor).Contains(x.UserId)).ToListAsync())
                 await Add(db, p.UserId, "partner", date, now, p);
         if (date < week || date > today) return;
         var goals = await db.WeeklyGoals.Where(x => x.UserId == actor).ToListAsync();

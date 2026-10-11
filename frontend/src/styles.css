@@ -1461,3 +1461,51 @@ td small {
     padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 }
+/* Buddy management and invitation landing page. */
+.buddy-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+.buddy-settings form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.buddy-settings form label {
+  grid-column: 1 / -1;
+}
+.buddy-settings form input {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .buddy-settings form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .buddy-row .button {
+    white-space: normal;
+  }
+}
+.buddy-row > span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.invitation-row > span {
+  flex-basis: 100%;
+}
+.buddy-link {
+  margin: 1rem 0;
+}
+.buddy-link input {
+  width: 100%;
+}
+.invitation-page {
+  max-width: 680px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+.invitation-page .button {
+  margin: 0.5rem 0.5rem 0.5rem 0;
+}
