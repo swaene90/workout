@@ -106,7 +106,7 @@ The remote configuration publishes no inbound host ports. Cloudflare provides pu
 
 The Compose network uses `172.30.0.0/24`. If it overlaps another network on your server, change the subnet and all three static addresses together, including `Proxy__TrustedIp`. The `data-protection` volume persists cookie-protection keys across restarts. Preserve that volume; restrict server access because it contains authentication key material.
 
-Updates are manual: pull the approved commit, back up the database, and rerun Compose. No automated production deployment or server credentials are stored in GitHub.
+Successful pushes to `main` can deploy automatically through the Unraid self-hosted runner described in [unraid.md](unraid.md). The deployment job builds the app, runs migrations before restarting it, and verifies health. Register the Workout runner once to activate this workflow; production credentials stay in the server's private `.env`. Back up the database and session keys before merging schema changes. Manual deployment remains available through the same guide.
 
 ## Tests
 
